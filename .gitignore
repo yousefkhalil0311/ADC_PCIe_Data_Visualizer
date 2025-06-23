@@ -1,0 +1,53 @@
+# C++ build artifacts
+*.o
+*.obj
+*.so
+*.a
+*.out
+*.exe
+*.dll
+
+# Compiled binary files
+*.bin
+
+# Build system folders
+/build/
+/bin/
+/lib/
+/CMakeFiles/
+/Makefile
+CMakeCache.txt
+cmake_install.cmake
+
+# Python cache and environments
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+*.egg
+*.env
+*.venv
+env/
+venv/
+.Python
+pip-log.txt
+
+# WSL / VS Code settings (if used)
+.vscode/
+*.code-workspace
+
+# Logs and temporary files
+*.log
+*.tmp
+*.swp
+*.swo
+*.bak
+*~
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Git-specific
+*.orig
