@@ -8,7 +8,7 @@ class Plot:
     def __init__(self, ADCchannel : str, x_width : int, window : pg.GraphicsLayoutWidget):
         self.ADCchannel : str = ADCchannel
         self.SAMPLE_SIZE : int = x_width
-        self.x : np.ndarray = np.arange(0, SAMPLE_SIZE, SAMPLE_SIZE / x_width)
+        self.x : np.ndarray = np.arange(0, self.SAMPLE_SIZE, self.SAMPLE_SIZE / x_width)
         self.y : np.ndarray = np.zeros(x_width)
         self.plot = window.addPlot()
         self.plot.setTitle(ADCchannel)
