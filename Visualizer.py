@@ -93,9 +93,9 @@ plot1 = Plot('ADC Channel 1 Data', SAMPLE_SIZE, graph)
 #update all plots
 def updateall():
     try:
-        a: np.ndarray = np.random.uniform(low=-10, high=10, size=plot1.SAMPLE_SIZE)#getPCIeData(np.random.randint(1, 200), plot1.SAMPLE_SIZE)
+        a: np.ndarray = np.random.randint(low=0, high=200, size=plot1.SAMPLE_SIZE * 20)#getPCIeData(np.random.randint(1, 200), plot1.SAMPLE_SIZE)
         #print("Received: ", a)
-        plot1.setThreshold(slider1.getVal)
+        plot1.setThreshold(slider1.getVal())
         plot1.update(a)
     except Exception as e:
 

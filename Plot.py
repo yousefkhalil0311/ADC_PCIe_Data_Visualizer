@@ -17,7 +17,7 @@ class Plot:
         self.plot.setLabel('bottom', 'Sample', units='')
         self.plot.setLabel('left', 'Voltage', units='mV')
         self.plot.enableAutoRange(axis='y', enable=True)
-        #self.plot.setYRange(0, 5000)
+        self.plot.setYRange(0, 200)
 
         self.curve = self.plot.plot(self.x, self.y, pen='y')
 
@@ -31,16 +31,25 @@ class Plot:
 
         thresholdIndex: int = 0
 
-        for index, sampleVal in newPlotData:
+        for index, sampleVal in enumerate(newPlotData):
             if sampleVal == self.threshold:
+                print('a' + str(thresholdIndex))
                 thresholdIndex = index
+                break
+                
         
-        if len(newPlotData) != SAMPLE_SIZE:
-            return 
+
+        #if len(newPlotData) != SAMPLE_SIZE:
+        #    return 
 
         view: np.ndarray = newPlotData[thresholdIndex : len(newPlotData)]
 
         self.y = view.copy()
+
+        if len(self.y) > SAMPLE_SIZE :
+            self.y = self.y[0 : SAMPLE_SIZE]
+        else:
+            self.y = np.pad(self.y, (0, SAMPLE_SIZE - len(self.y)), constant_values=0)
 
         if(self.y.size % SAMPLE_SIZE == 0):
             self.curve.setData(self.x, self.y)
