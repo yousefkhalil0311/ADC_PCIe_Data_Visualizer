@@ -6,8 +6,10 @@ class Plot:
 
     #each Plot will represent the data from one ADC channel on the connected hardware
     def __init__(self, ADCchannel : str, x_width : int, window : pg.GraphicsLayoutWidget):
+        super().__init__()
         self.ADCchannel : str = ADCchannel
         self.SAMPLE_SIZE : int = x_width
+        self.threshold: int = 0
         self.x : np.ndarray = np.arange(0, self.SAMPLE_SIZE, self.SAMPLE_SIZE / x_width)
         self.y : np.ndarray = np.zeros(x_width)
         self.plot = window.addPlot()
@@ -19,19 +21,30 @@ class Plot:
 
         self.curve = self.plot.plot(self.x, self.y, pen='y')
 
+
     def update(self, newPlotData : np.ndarray) -> None :
         
         if newPlotData is None:
             return
         
         SAMPLE_SIZE : int = self.SAMPLE_SIZE
+
+        thresholdIndex: int = 0
+
+        for index, sampleVal in newPlotData:
+            if sampleVal == self.threshold:
+                thresholdIndex = index
         
         if len(newPlotData) != SAMPLE_SIZE:
             return 
 
-        self.y = newPlotData.copy()
+        view: np.ndarray = newPlotData[thresholdIndex : len(newPlotData)]
 
-        
+        self.y = view.copy()
+
         if(self.y.size % SAMPLE_SIZE == 0):
             self.curve.setData(self.x, self.y)
         
+
+    def setThreshold(self, threshold: int) -> None:
+        self.threshold = threshold
