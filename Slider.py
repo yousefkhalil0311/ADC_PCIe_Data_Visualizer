@@ -10,7 +10,7 @@ high: int := max value of slider
 '''
 
 class Slider:
-    def __init__(self, title: str, unit: str, low: int, high: int, default: int, layout: QtWidgets.QVBoxLayout | QtWidgets.QHBoxLayout, orientation):
+    def __init__(self, title: str, unit: str, low: int, high: int, default: int, layout: QtWidgets.QBoxLayout, orientation):
         self.low: int = low
         self.high: int = high
         self.val: int = default

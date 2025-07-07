@@ -4,7 +4,7 @@ from collections.abc import Callable
 
 #Class to instantiate a group of Radio Buttons that are exclusive to the given instantiation
 class RadioButton:
-    def __init__(self, title: str, layout: QtWidgets.QVBoxLayout | QtWidgets.QHBoxLayout, *options: str, default: str | None = None):
+    def __init__(self, title: str, layout: QtWidgets.QBoxLayout, *options: str, default: str | None = None):
 
         #Set Radio Button Set title and store options arguments
         self.title: str = title

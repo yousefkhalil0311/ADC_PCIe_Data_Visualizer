@@ -14,6 +14,9 @@ from QtButtons import RadioButton
 from QtButtons import CheckBox
 from QtButtons import PushButton
 from QtFileSys import BrowserManager
+from ParamTable import ParamTable
+from ParamTable import ParamRow
+
 
 
 #name of pcie device to connect to
@@ -77,6 +80,10 @@ main_layout = QtWidgets.QVBoxLayout()
 window.setLayout(main_layout)
 
 plotLayout = QtWidgets.QHBoxLayout()
+
+DDCTable: ParamTable = ParamTable('CH', 'Enable', 'Param', 'DDC1', 'DDC2', 'DDC3')
+
+channel0Row: ParamRow = ParamRow(DDCTable.VerticalLayout, QtWidgets.QLabel('0'), QtWidgets.QCheckBox(), QtWidgets.QLabel('0'), QtWidgets.QLineEdit(), QtWidgets.QLineEdit(), QtWidgets.QLineEdit())
 
 triggerLayout = QtWidgets.QVBoxLayout()
 

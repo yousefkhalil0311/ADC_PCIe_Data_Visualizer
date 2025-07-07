@@ -2,7 +2,7 @@ import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
 
 class BrowserManager:
-    def __init__(self, title: str, layout: QtWidgets.QVBoxLayout | QtWidgets.QHBoxLayout):
+    def __init__(self, title: str, layout: QtWidgets.QBoxLayout):
 
         self.title: str = title
 
