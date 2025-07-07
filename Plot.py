@@ -5,19 +5,18 @@ from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
 class Plot:
 
     #each Plot will represent the data from one ADC channel on the connected hardware
-    def __init__(self, ADCchannel : str, x_width : int, window : pg.GraphicsLayoutWidget):
-        super().__init__()
-        self.ADCchannel : str = ADCchannel
+    def __init__(self, title: str, unit: str, y_min: int, y_max: int, x_width : int, window : pg.GraphicsLayoutWidget):
+        self.title : str = title
         self.SAMPLE_SIZE : int = x_width
         self.threshold: int = 0
         self.x : np.ndarray = np.arange(0, self.SAMPLE_SIZE, self.SAMPLE_SIZE / x_width)
         self.y : np.ndarray = np.zeros(x_width)
         self.plot = window.addPlot()
-        self.plot.setTitle(ADCchannel)
+        self.plot.setTitle(title)
         self.plot.setLabel('bottom', 'Sample', units='')
-        self.plot.setLabel('left', 'Voltage', units='mV')
-        self.plot.enableAutoRange(axis='y', enable=True)
-        self.plot.setYRange(0, 200)
+        self.plot.setLabel('left', 'Amplitude', units=unit)
+        self.plot.enableAutoRange(axis='y', enable=False)
+        self.plot.setYRange(y_min, y_max)
 
         self.curve = self.plot.plot(self.x, self.y, pen='y')
 
@@ -33,14 +32,8 @@ class Plot:
 
         for index, sampleVal in enumerate(newPlotData):
             if sampleVal == self.threshold:
-                print('a' + str(thresholdIndex))
                 thresholdIndex = index
                 break
-                
-        
-
-        #if len(newPlotData) != SAMPLE_SIZE:
-        #    return 
 
         view: np.ndarray = newPlotData[thresholdIndex : len(newPlotData)]
 
@@ -57,3 +50,7 @@ class Plot:
 
     def setThreshold(self, threshold: int) -> None:
         self.threshold = threshold
+        
+
+    def setRange(self, y_min: int, y_max: int) -> None:
+        self.plot.setYRange(y_min, y_max)

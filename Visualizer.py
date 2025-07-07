@@ -10,15 +10,24 @@ import struct
 #project specific include
 from Plot import Plot
 from Slider import Slider
+from QtButtons import RadioButton
+from QtButtons import CheckBox
+from QtButtons import PushButton
+from QtFileSys import BrowserManager
 
 
 #name of pcie device to connect to
 PCIe_Device: str = '/dev/xdma0_c2h_0'
 sharedmemFile: str = '/dev/shm/xdmaPythonStream'
 
-#FFT size the Zynq FPGA
-SAMPLE_SIZE: int = 64
-BUFFER_SIZE: int = 1024 * SAMPLE_SIZE*4
+#Sample Depth
+SAMPLE_SIZE: int = 512
+BUFFER_SIZE: int = 20 * SAMPLE_SIZE * 4
+
+#Graph Parameters
+PLOT_UNITS: str = 'mV'
+MIN_PLOT_VALUE: int = 0
+MAX_PLOT_VALUE: int = 200
 
 '''
 with open(sharedmemFile, "wb") as f:
@@ -67,35 +76,72 @@ main_layout = QtWidgets.QVBoxLayout()
 
 window.setLayout(main_layout)
 
-layout = QtWidgets.QHBoxLayout()
+plotLayout = QtWidgets.QHBoxLayout()
 
-main_layout.addLayout(layout)
+triggerLayout = QtWidgets.QVBoxLayout()
+
+pathOptions: RadioButton = RadioButton('System Capture', triggerLayout, 'Active', 'Disabled', default='Active')
 
 #initialize and draw all sliders
-slider1 = Slider(0, 200, layout)
+triggerSlider: Slider = Slider('Trigger', PLOT_UNITS, MIN_PLOT_VALUE, MAX_PLOT_VALUE, MIN_PLOT_VALUE, triggerLayout, QtCore.Qt.Vertical)
 
+pathOptions: RadioButton = RadioButton('Edge', triggerLayout, 'Rising', 'Falling', 'Any', default='Rising')
+
+plotLayout.addLayout(triggerLayout)
 
 #window is dynamically resizable. Start with small window size for compatibility 
 graph = pg.GraphicsLayoutWidget(show=True)
 graph.setWindowTitle("ADC Visualizer")
-#graph.resize(640, 480)
 
-layout.addWidget(graph)
+#initialize and draw all plots
+plot1: Plot = Plot('ADC Sample Data', PLOT_UNITS, MIN_PLOT_VALUE, MAX_PLOT_VALUE, SAMPLE_SIZE, graph)
+
+plotLayout.addWidget(graph)
+
+main_layout.addLayout(plotLayout)
+
+attSliderLayout = QtWidgets.QHBoxLayout()
+
+pathOptions: RadioButton = RadioButton('Select Path', attSliderLayout, '500MHz LP', '1GHz LP', '2GHz LP', 'Bypass', default='500MHz LP')
+
+attenuationSlider: Slider = Slider('Attenuation', 'dB', 0, 32, 32, attSliderLayout, QtCore.Qt.Horizontal)
+
+calEnable: CheckBox = CheckBox('Calibration Mode', attSliderLayout)
+
+main_layout.addLayout(attSliderLayout)
+
+row3Layout = QtWidgets.QHBoxLayout()
+
+fileBrowser: BrowserManager = BrowserManager('Select File for Capture', row3Layout)
+
+numSamplesOrTime: RadioButton = RadioButton('Aquire by', row3Layout, '# of Samples', 'time(us)', default='# of Samples')
+
+textBox: QtWidgets.QLineEdit = QtWidgets.QLineEdit()
+
+textBox.setMaxLength(12)
+textBox.setFixedWidth(8 * 12)
+
+row3Layout.addWidget(textBox)
+
+captureButton: PushButton = PushButton('Capture', row3Layout, lambda: print('Capturing!!!!'))
+
+main_layout.addLayout(row3Layout)
+
+
 
 #set antialiasing for better looking plots
 pg.setConfigOptions(antialias=True)
 pg.setConfigOptions(useOpenGL=True)
 
-#initialize and draw all plots
-plot1 = Plot('ADC Channel 1 Data', SAMPLE_SIZE, graph)
 
 
 #update all plots
 def updateall():
     try:
         a: np.ndarray = np.random.randint(low=0, high=200, size=plot1.SAMPLE_SIZE * 20)#getPCIeData(np.random.randint(1, 200), plot1.SAMPLE_SIZE)
-        #print("Received: ", a)
-        plot1.setThreshold(slider1.getVal())
+        
+        plot1.setThreshold(triggerSlider.getVal())
+
         plot1.update(a)
     except Exception as e:
 
@@ -106,7 +152,7 @@ def updateall():
 
 timer = QtCore.QTimer()
 timer.timeout.connect(updateall)
-timer.start(100)
+timer.start(0)
 
 
 #show window and execute plot updates
