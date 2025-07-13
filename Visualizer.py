@@ -14,8 +14,10 @@ from QtButtons import RadioButton
 from QtButtons import CheckBox
 from QtButtons import PushButton
 from QtFileSys import BrowserManager
-from ParamTable import ParamTable
-from ParamTable import ParamRow
+from ParamTools import ChannelControlWidget
+from ParamTools import LabelColumn
+from ParamTools import CheckBoxColumn
+from ParamTools import LineEditColumn
 
 
 
@@ -81,13 +83,23 @@ window.setLayout(main_layout)
 
 plotLayout = QtWidgets.QHBoxLayout()
 
-DDCTable: ParamTable = ParamTable('CH', 'Enable', 'Param', 'DDC1', 'DDC2', 'DDC3')
+leftPanel = QtWidgets.QVBoxLayout()
 
-channel0Row: ParamRow = ParamRow(DDCTable.VerticalLayout, QtWidgets.QLabel('0'), QtWidgets.QCheckBox(), QtWidgets.QLabel('0'), QtWidgets.QLineEdit(), QtWidgets.QLineEdit(), QtWidgets.QLineEdit())
+plotLayout.addLayout(leftPanel)
+
+Ch0Widget: ChannelControlWidget = ChannelControlWidget(0, leftPanel)
+Ch1Widget: ChannelControlWidget = ChannelControlWidget(1, leftPanel)
+Ch2Widget: ChannelControlWidget = ChannelControlWidget(2, leftPanel)
+Ch3Widget: ChannelControlWidget = ChannelControlWidget(3, leftPanel)
+Ch4Widget: ChannelControlWidget = ChannelControlWidget(4, leftPanel)
+Ch5Widget: ChannelControlWidget = ChannelControlWidget(5, leftPanel)
+Ch6Widget: ChannelControlWidget = ChannelControlWidget(6, leftPanel)
+Ch7Widget: ChannelControlWidget = ChannelControlWidget(7, leftPanel)
+
 
 triggerLayout = QtWidgets.QVBoxLayout()
 
-pathOptions: RadioButton = RadioButton('System Capture', triggerLayout, 'Active', 'Disabled', default='Active')
+pathOptions: RadioButton = RadioButton('System', triggerLayout, 'Active', 'Disabled', default='Active')
 
 #initialize and draw all sliders
 triggerSlider: Slider = Slider('Trigger', PLOT_UNITS, MIN_PLOT_VALUE, MAX_PLOT_VALUE, MIN_PLOT_VALUE, triggerLayout, QtCore.Qt.Vertical)

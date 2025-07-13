@@ -55,6 +55,7 @@ class CheckBox:
         #Add checkBox to parent layout
         layout.addWidget(self.checkBox)
 
+#Class to instantiate Pushbutton widgets in the parent layout
 class PushButton:
     def __init__(self, title: str, layout: QtWidgets.QVBoxLayout | QtWidgets.QHBoxLayout, callback: Callable[[], None]):
 
@@ -64,5 +65,6 @@ class PushButton:
 
         layout.addWidget(self.pushButton)
 
+        #pressing this button will call the callback function specified in the input parameters
         self.pushButton.clicked.connect(callback)
 
