@@ -161,6 +161,8 @@ def updateall():
         
         plot1.setThreshold(triggerSlider.getVal())
 
+        print(Ch0Widget.getParamData())
+
         plot1.update(a)
     except Exception as e:
 
