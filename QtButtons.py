@@ -14,6 +14,8 @@ class RadioButton:
         self.label = QtWidgets.QLabel('Uninitialized Label')
         self.label.setText(f"{title}:")
 
+        self.currentButton: str = default
+
         #Add label to layout
         layout.addWidget(self.label)
 
@@ -36,13 +38,29 @@ class RadioButton:
             if radioButtonOption == default:
                 radioButton.setChecked(True)
 
+
+        #attach callback function to button group to handle state changes
+        self.buttonGroup.buttonToggled.connect(self.setSelectedRadioButton)
+
+    #callback to handle radio button state changes
+    def setSelectedRadioButton(self, radioButton: QtWidgets.QRadioButton, checked: bool) -> None:
+
+        #react when a button is selected
+        if checked:
+            self.currentButton = radioButton.text()
+
+    def getSelectedRadioButton(self) -> str:
+        return self.currentButton
+
+
+
 #Class to instantiate checkbox widgets in the parent layout
 class CheckBox:
     def __init__(self, title: str, layout: QtWidgets.QVBoxLayout | QtWidgets.QHBoxLayout):
 
         self.title: str = title
 
-        #Create label for Radio Buttons
+        #Create label for checkbox
         self.label = QtWidgets.QLabel('Uninitialized Label')
         self.label.setText(f"{title}:")
 
@@ -51,9 +69,20 @@ class CheckBox:
 
         #Create checkBox widget
         self.checkBox: QtWidgets.QCheckBox = QtWidgets.QCheckBox()
+
+        self.isChecked: bool = False
+
+        #function called when checkbox changes state
+        self.checkBox.checkStateChanged.connect(self.checkStateCallback)
         
         #Add checkBox to parent layout
         layout.addWidget(self.checkBox)
+
+    def checkStateCallback(self) -> None:
+        self.isChecked = self.checkBox.isChecked()
+
+    def getCheckState(self) -> bool:
+        return self.checkBox.isChecked()
 
 #Class to instantiate Pushbutton widgets in the parent layout
 class PushButton:

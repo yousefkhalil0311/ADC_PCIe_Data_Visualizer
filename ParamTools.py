@@ -84,7 +84,7 @@ class LineEditColumn:
             lineEdit.setMaximumSize(60, 20)
 
             #attach callback to automatically store text when entered
-            lineEdit.textChanged.connect(lambda text, index = rowNum: self.storeTextCallback(index, text))
+            lineEdit.editingFinished.connect(lambda text, index = rowNum: self.storeTextCallback(index, text))
 
             #add lineEdit to column
             layout.addWidget(lineEdit, rowNum + 1, columnIndex)
@@ -105,6 +105,59 @@ class LineEditColumn:
             listOfStrings.append(text)
 
         return listOfStrings
+    
+
+#Creates a column of numRows dropDownBoxes with options corresponding to the checkBoxOptions parameters provided
+class DropDownColumn:
+    def __init__(self, layout: QtWidgets.QGridLayout, columnName: str, columnIndex: int, numRows: int, *checkBoxOptions: tuple[str, ...]):
+
+        self.columnName = columnName
+        self.columnIndex = columnIndex
+
+        #add title of Column
+        layout.addWidget(QtWidgets.QLabel(self.columnName), 0, self.columnIndex)
+
+        #store instances of drop down boxes and the currently selected option
+        self.dropDownBoxes: list[list[Union[QtWidgets.QComboBox, str]]] = []
+
+        #create qty numRows drop down boxes, each having the options of checkBoxOptions 
+        for rowNum in range(numRows):
+
+            #create dropdown box object
+            dropDownBox: QtWidgets.QComboBox = QtWidgets.QComboBox()
+
+            #add options to dropdown box
+            dropDownBox.addItems(checkBoxOptions)
+
+            dropDownBox.setMaximumSize(60, 20)
+
+            #store in class variable
+            self.dropDownBoxes.append([dropDownBox, ""])
+
+            #on change of option, calls dropDownCallback to set new Option
+            dropDownBox.currentIndexChanged.connect(lambda optionString, index = rowNum: self.dropDownCallback(index, optionString))
+
+            #add dropdown box to column
+            layout.addWidget(dropDownBox, rowNum + 1, columnIndex)
+
+    #callback used to store new option state when user selects a different option
+    def dropDownCallback(self, index: int, optionString: str) -> None:
+        self.dropDownBoxes[index][1] = optionString
+
+    #returns the selected option from 1 dropdown box
+    def getDropDownOption(self, index: int) -> str:
+        return self.dropDownBoxes[index][1]
+    
+    #returns state of all checkboxes in class object, or column
+    def getAllDropDownStates(self) -> list[str]:
+
+        listOfOptions: list[str] = []
+
+        for _, optionString in self.dropDownBoxes:
+            listOfOptions.append(optionString)
+
+        return listOfOptions
+
 
 class ChannelControlWidget:
     def __init__(self, channel: int, layout: QtWidgets.QBoxLayout):
@@ -124,14 +177,15 @@ class ChannelControlWidget:
         self.ddcFmixInputs: LineEditColumn = LineEditColumn(self.GridLayout, 'Fmix (MHz)', 2, 3)
 
         #DDC output sampling frequency column
-        LineEditColumn(self.GridLayout, 'SFout (MHz)', 3, 3)
+        self.ddcSampleFreqOptions: DropDownColumn = DropDownColumn(self.GridLayout, 'SFout (Msps)', 3, 3, '1', '2.5', '5', '6.25', '7.8125', '10', '25', '62.5', '125', '250', '500', '1000')
 
     def getParamData(self) -> dict[str, list[Union[int, str]]]:
     
         return  {
             "chEnable": self.channelEnableCheck.getCheckBoxStates(),
             "ddcEnable": self.ddcCheckboxColumn.getCheckBoxStates(),
-            "ddcFmixVals": self.ddcFmixInputs.getAllText()
+            "ddcFmixVals": self.ddcFmixInputs.getAllText(),
+            "ddcFsampleVals": self.ddcSampleFreqOptions.getAllDropDownStates()
         }
 
 

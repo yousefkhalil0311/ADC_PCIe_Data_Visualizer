@@ -27,7 +27,7 @@ sharedmemFile: str = '/dev/shm/xdmaPythonStream'
 
 #Sample Depth
 SAMPLE_SIZE: int = 512
-BUFFER_SIZE: int = 20 * SAMPLE_SIZE * 4
+BUFFER_SIZE: int = 100 * SAMPLE_SIZE * 4
 
 #Graph Parameters
 PLOT_UNITS: str = 'mV'
@@ -99,12 +99,12 @@ Ch7Widget: ChannelControlWidget = ChannelControlWidget(7, leftPanel)
 
 triggerLayout = QtWidgets.QVBoxLayout()
 
-pathOptions: RadioButton = RadioButton('System', triggerLayout, 'Active', 'Disabled', default='Active')
+activateSetting: RadioButton = RadioButton('System', triggerLayout, 'Active', 'Disabled', default='Active')
 
 #initialize and draw all sliders
-triggerSlider: Slider = Slider('Trigger', PLOT_UNITS, MIN_PLOT_VALUE, MAX_PLOT_VALUE, MIN_PLOT_VALUE, triggerLayout, QtCore.Qt.Vertical)
+triggerSlider: Slider = Slider('Trigger', PLOT_UNITS, MIN_PLOT_VALUE, MAX_PLOT_VALUE, 100, triggerLayout, QtCore.Qt.Vertical)
 
-pathOptions: RadioButton = RadioButton('Edge', triggerLayout, 'Rising', 'Falling', 'Any', default='Rising')
+edgeSetting: RadioButton = RadioButton('Edge', triggerLayout, 'Rising', 'Falling', 'Any', default='Rising')
 
 plotLayout.addLayout(triggerLayout)
 
@@ -116,6 +116,11 @@ graph.setWindowTitle("ADC Visualizer")
 plot1: Plot = Plot('ADC Sample Data', PLOT_UNITS, MIN_PLOT_VALUE, MAX_PLOT_VALUE, SAMPLE_SIZE, graph)
 
 plotLayout.addWidget(graph)
+
+graph.nextRow()
+
+#initialize and draw all plots
+plot2: Plot = Plot('ADC Sample Data', PLOT_UNITS, MIN_PLOT_VALUE, MAX_PLOT_VALUE, SAMPLE_SIZE, graph, True)
 
 main_layout.addLayout(plotLayout)
 
@@ -140,6 +145,11 @@ textBox: QtWidgets.QLineEdit = QtWidgets.QLineEdit()
 textBox.setMaxLength(12)
 textBox.setFixedWidth(8 * 12)
 
+def callback():
+    print(textBox.text())
+
+textBox.editingFinished.connect(callback)
+
 row3Layout.addWidget(textBox)
 
 captureButton: PushButton = PushButton('Capture', row3Layout, lambda: print('Capturing!!!!'))
@@ -157,13 +167,15 @@ pg.setConfigOptions(useOpenGL=True)
 #update all plots
 def updateall():
     try:
-        a: np.ndarray = np.random.randint(low=0, high=200, size=plot1.SAMPLE_SIZE * 20)#getPCIeData(np.random.randint(1, 200), plot1.SAMPLE_SIZE)
+        a: np.ndarray = (100 + (100 * np.sin(np.linspace(0, 2*np.pi * 30, SAMPLE_SIZE*20))).astype(int))[np.random.randint(0, 500):]
         
         plot1.setThreshold(triggerSlider.getVal())
-
-        print(Ch0Widget.getParamData())
+        plot1.setTriggerEdge(edgeSetting.getSelectedRadioButton())
 
         plot1.update(a)
+        plot2.update(a)
+
+        
     except Exception as e:
 
         #close window in case of failure
@@ -173,7 +185,7 @@ def updateall():
 
 timer = QtCore.QTimer()
 timer.timeout.connect(updateall)
-timer.start(0)
+timer.start(100)
 
 
 #show window and execute plot updates
