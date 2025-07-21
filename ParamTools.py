@@ -2,6 +2,9 @@ import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
 from typing import Any, Union
 
+#global parameter store & hardware controller
+from QC_Controller import QueensCanyon
+
 class LabelColumn:
     def __init__(self, layout: QtWidgets.QGridLayout, columnName: str,  columnIndex: int, *labels: str):
 
@@ -24,6 +27,7 @@ class CheckBoxColumn:
     def __init__(self, layout: QtWidgets.QGridLayout, columnName: str, columnIndex: int, *checkBoxLabels: str):
 
         self.labels: tuple[str, ...] = checkBoxLabels
+        self.columnName = columnName
 
         #store individual checkbox objects within column, as well as their current state
         self.checkBoxes: list[list[Union[QtWidgets.QCheckBox, int]]] = []
@@ -53,6 +57,7 @@ class CheckBoxColumn:
     #callback to react to state changes on checkboxes
     def checkBoxCallback(self, index: int, state: int) -> None:
         self.checkBoxes[index][1] = state
+        QueensCanyon.setParam(f"{self.columnName}-{self.labels[index]}", True if state else False)
 
     #returns the states of all checkboxes in the column
     def getCheckBoxStates(self) -> list[int]:
@@ -67,6 +72,8 @@ class CheckBoxColumn:
 #Creates a column of textBoxes corresponding to the numRows parameter
 class LineEditColumn:
     def __init__(self, layout: QtWidgets.QGridLayout, columnName: str, columnIndex: int, numRows: int):
+
+        self.name = columnName
 
         layout.addWidget(QtWidgets.QLabel(columnName), 0, columnIndex)
 
@@ -84,7 +91,7 @@ class LineEditColumn:
             lineEdit.setMaximumSize(60, 20)
 
             #attach callback to automatically store text when entered
-            lineEdit.editingFinished.connect(lambda text, index = rowNum: self.storeTextCallback(index, text))
+            lineEdit.editingFinished.connect(lambda rN = rowNum, le = lineEdit: self.storeTextCallback(rN, le.text()))
 
             #add lineEdit to column
             layout.addWidget(lineEdit, rowNum + 1, columnIndex)
@@ -92,6 +99,7 @@ class LineEditColumn:
     #callback to store user input
     def storeTextCallback(self, index: int, text: str) -> None:
         self.lineEdits[index][1] = text
+        QueensCanyon.setParam(f"{self.name}-{index}", text)
 
     #get string entered in a single lineEdit box
     def getRowText(self, index: int) -> str:
@@ -143,6 +151,7 @@ class DropDownColumn:
     #callback used to store new option state when user selects a different option
     def dropDownCallback(self, index: int, optionString: str) -> None:
         self.dropDownBoxes[index][1] = optionString
+        QueensCanyon.setParam(f"{self.columnName}-{index}", optionString)
 
     #returns the selected option from 1 dropdown box
     def getDropDownOption(self, index: int) -> str:

@@ -2,6 +2,9 @@ import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
 from collections.abc import Callable
 
+#global parameter store & hardware controller
+from QC_Controller import QueensCanyon
+
 #Class to instantiate a group of Radio Buttons that are exclusive to the given instantiation
 class RadioButton:
     def __init__(self, title: str, layout: QtWidgets.QBoxLayout, *options: str, default: str | None = None):
@@ -47,7 +50,9 @@ class RadioButton:
 
         #react when a button is selected
         if checked:
+            QueensCanyon.setParam(f"{self.title}-{self.currentButton}", not checked)
             self.currentButton = radioButton.text()
+            QueensCanyon.setParam(f"{self.title}-{self.currentButton}", checked)
 
     def getSelectedRadioButton(self) -> str:
         return self.currentButton
@@ -80,6 +85,7 @@ class CheckBox:
 
     def checkStateCallback(self) -> None:
         self.isChecked = self.checkBox.isChecked()
+        QueensCanyon.setParam(f"{self.title}", self.isChecked)
 
     def getCheckState(self) -> bool:
         return self.checkBox.isChecked()

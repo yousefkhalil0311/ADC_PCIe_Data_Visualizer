@@ -19,6 +19,9 @@ from ParamTools import LabelColumn
 from ParamTools import CheckBoxColumn
 from ParamTools import LineEditColumn
 
+#global parameter store & hardware controller
+from QC_Controller import QueensCanyon
+
 
 
 #name of pcie device to connect to
@@ -146,7 +149,7 @@ textBox.setMaxLength(12)
 textBox.setFixedWidth(8 * 12)
 
 def callback():
-    print(textBox.text())
+    QueensCanyon.setParam("aquisitionTime(ms)", textBox.text())
 
 textBox.editingFinished.connect(callback)
 
@@ -156,7 +159,7 @@ captureButton: PushButton = PushButton('Capture', row3Layout, lambda: print('Cap
 
 main_layout.addLayout(row3Layout)
 
-
+QueensCanyon.saveParamsToJson()
 
 #set antialiasing for better looking plots
 pg.setConfigOptions(antialias=True)
@@ -180,6 +183,8 @@ def updateall():
         plot1.update(a)
         plot2.update(a)
 
+
+        QueensCanyon.saveParamsToJson()
         
     except Exception as e:
 
@@ -190,7 +195,7 @@ def updateall():
 
 timer = QtCore.QTimer()
 timer.timeout.connect(updateall)
-timer.start(0)
+timer.start(10)
 
 
 #show window and execute plot updates

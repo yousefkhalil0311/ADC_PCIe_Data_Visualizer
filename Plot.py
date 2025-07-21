@@ -44,15 +44,12 @@ class Plot:
 
                     #trigger on specific edge
                     if newPlotData[index + 1] > sampleVal and self.triggerEdge == 'Rising':
-                        print('Rising')
                         thresholdIndex = index
                         break
                     elif newPlotData[index + 1] <= sampleVal and self.triggerEdge == 'Falling':
                         thresholdIndex = index
-                        print('Falling')
                         break
                     elif self.triggerEdge == 'Any':
-                        print('Any')
                         thresholdIndex = index
                         break
                     

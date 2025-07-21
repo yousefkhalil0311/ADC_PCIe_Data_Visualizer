@@ -1,1 +1,14 @@
-{"freq": 200, "active": true, "options": {"a": 100, "b": 200, "c": 300}, "anotherOption": false}
+{
+    "Channel 0-Enable": true,
+    "Channel 1-Enable": true,
+    "Channel 2-Enable": true,
+    "Channel 3-Enable": true,
+    "Channel 4-Enable": true,
+    "Channel 5-Enable": true,
+    "Channel 6-Enable": true,
+    "Channel 7-Enable": true,
+    "DDC 0-1": true,
+    "SFout (Msps)-0": 11,
+    "SFout (Msps)-2": 3,
+    "SFout (Msps)-1": 2
+}
