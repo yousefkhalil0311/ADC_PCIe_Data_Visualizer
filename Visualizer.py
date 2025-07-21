@@ -162,13 +162,18 @@ main_layout.addLayout(row3Layout)
 pg.setConfigOptions(antialias=True)
 pg.setConfigOptions(useOpenGL=True)
 
-
+freq = 0
 
 #update all plots
 def updateall():
+
+    global freq
+
     try:
-        a: np.ndarray = (100 + (100 * np.sin(np.linspace(0, 2*np.pi * 30, SAMPLE_SIZE*20))).astype(int))[np.random.randint(0, 500):]
+        a: np.ndarray = (100 + (100 * np.sin(np.linspace(0, 2*np.pi * freq, SAMPLE_SIZE*20))).astype(int))[np.random.randint(0, 500):]
         
+        freq = freq%100000 + 1
+
         plot1.setThreshold(triggerSlider.getVal())
         plot1.setTriggerEdge(edgeSetting.getSelectedRadioButton())
 
@@ -185,7 +190,7 @@ def updateall():
 
 timer = QtCore.QTimer()
 timer.timeout.connect(updateall)
-timer.start(100)
+timer.start(0)
 
 
 #show window and execute plot updates
