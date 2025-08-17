@@ -8,7 +8,7 @@ class BrowserManager:
         self.title: str = title
 
         #label
-        self.label = QtWidgets.QLabel("Save Path")
+        self.label = QtWidgets.QLabel(self.title)
 
         #enter filename here in gui
         self.textBox = QtWidgets.QLineEdit()

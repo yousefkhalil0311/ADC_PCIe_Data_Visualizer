@@ -19,12 +19,20 @@ class Plot:
         self.plot.enableAutoRange(axis='y', enable=False)
         self.plot.setYRange(y_min, y_max)
 
-        self.curve = self.plot.plot(self.x, self.y, pen='y')
+        self.curve0 = self.plot.plot(self.x, self.y, pen='y')
+        self.curve1 = self.plot.plot(self.x, self.y, pen='r')
+        self.curve2 = self.plot.plot(self.x, self.y, pen='g')
+        self.curve3 = self.plot.plot(self.x, self.y, pen='b')
+
+        self.curve4 = self.plot.plot(self.x, self.y, pen='c')
+        self.curve5 = self.plot.plot(self.x, self.y, pen='m')
+        self.curve6 = self.plot.plot(self.x, self.y, pen='y')
+        self.curve7 = self.plot.plot(self.x, self.y, pen='w')
 
         self.plot.ctrl.fftCheck.setChecked(fftActive)
 
 
-    def update(self, newPlotData : np.ndarray) -> None :
+    def update(self, newPlotData : np.ndarray, curve) -> None :
         
         if newPlotData is None:
             return
@@ -65,7 +73,7 @@ class Plot:
             self.y = np.pad(self.y, (0, SAMPLE_SIZE - len(self.y)), constant_values=0)
 
         if(self.y.size % SAMPLE_SIZE == 0):
-            self.curve.setData(self.x, self.y)
+            curve.setData(self.x, self.y)
         
 
     def setThreshold(self, threshold: int) -> None:

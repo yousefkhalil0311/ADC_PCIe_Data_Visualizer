@@ -26,45 +26,36 @@ from QC_Controller import QueensCanyon
 
 #name of pcie device to connect to
 PCIe_Device: str = '/dev/xdma0_c2h_0'
-sharedmemFile: str = '/dev/shm/xdmaPythonStream'
+sharedmemFile: str = 'adc_dump.bin'#'/dev/shm/xdmaPythonStream'
 
 #Sample Depth
 SAMPLE_SIZE: int = 512
-BUFFER_SIZE: int = 100 * SAMPLE_SIZE * 4
+BUFFER_SIZE: int = 512*16
 
 #Graph Parameters
 PLOT_UNITS: str = 'mV'
 MIN_PLOT_VALUE: int = 0
 MAX_PLOT_VALUE: int = 200
 
-'''
-with open(sharedmemFile, "wb") as f:
-    f.truncate(BUFFER_SIZE)
+
+#with open(sharedmemFile, "wb") as f:
+    #f.truncate(BUFFER_SIZE)
 
 with open(sharedmemFile, "r+b") as f:
     mm = mmap.mmap(f.fileno(), BUFFER_SIZE, access=mmap.ACCESS_READ)
-'''
+
 
 #Function definitions begin
 
 #gets data currently stored in RAM (circular buffer). Should start capturing data of size SAMPLE_SIZE once the voltage hits trigger threshold.
-def getPCIeData(threshold: int, numValues: int) -> np.ndarray | None: #return array of 32 bit words
+def getPCIeData(numValues: int, offset: int) -> np.ndarray | None: #return array of 32 bit words
 
     try:
         mm.seek(0)
-        threshold_index: int = 0
 
-        while threshold_index < SAMPLE_SIZE:
-            val : int = struct.unpack_from("<i", mm, threshold_index*4)[0]
-            if(val >= threshold):
-                break
-            threshold_index += 1
-        
-        print(threshold_index)
-        mm.seek(threshold_index * 4)
-
-        data: bytes = mm.read(numValues * 4)
-        return np.frombuffer(data, dtype=np.dtype('<i4'))
+        #data stored as 16 bit values (I0, Q0, I1, Q1, I2, Q2, I3, Q3, 0, 0, 0, 0, 0, 0, 0, 0)
+        data: bytes = mm.read(numValues * 2 * 16) #2 bytes per value, extract every 16th value
+        return np.frombuffer(data, dtype=np.dtype('<i2'))[offset::16]
     
     except KeyboardInterrupt:
         print("Done.")
@@ -139,7 +130,7 @@ main_layout.addLayout(attSliderLayout)
 
 row3Layout = QtWidgets.QHBoxLayout()
 
-fileBrowser: BrowserManager = BrowserManager('Select File for Capture', row3Layout)
+fileBrowser: BrowserManager = BrowserManager('Save File', row3Layout)
 
 numSamplesOrTime: RadioButton = RadioButton('Aquire by', row3Layout, '# of Samples', 'time(us)', default='# of Samples')
 
@@ -159,6 +150,16 @@ captureButton: PushButton = PushButton('Capture', row3Layout, lambda: print('Cap
 
 main_layout.addLayout(row3Layout)
 
+row4Layout = QtWidgets.QHBoxLayout()
+
+stdinBrowser: BrowserManager = BrowserManager('Data Stream', row4Layout)
+
+stdoutBrowser: BrowserManager = BrowserManager('Command Stream', row4Layout)
+
+stdoutBrowser: BrowserManager = BrowserManager('Config File', row4Layout)
+
+main_layout.addLayout(row4Layout)
+
 QueensCanyon.saveParamsToJson()
 
 #set antialiasing for better looking plots
@@ -173,15 +174,37 @@ def updateall():
     global freq
 
     try:
-        a: np.ndarray = (100 + (100 * np.sin(np.linspace(0, 2*np.pi * freq, SAMPLE_SIZE*20))).astype(int))[np.random.randint(0, 500):]
         
         freq = freq%100000 + 1
 
         plot1.setThreshold(triggerSlider.getVal())
         plot1.setTriggerEdge(edgeSetting.getSelectedRadioButton())
 
-        plot1.update(a)
-        plot2.update(a)
+        a0 = getPCIeData(SAMPLE_SIZE * 16, 0)
+        a1 = getPCIeData(SAMPLE_SIZE * 16, 1)
+        a2 = getPCIeData(SAMPLE_SIZE * 16, 2)
+        a3 = getPCIeData(SAMPLE_SIZE * 16, 3)
+        a4 = getPCIeData(SAMPLE_SIZE * 16, 4)
+        a5 = getPCIeData(SAMPLE_SIZE * 16, 5)
+        a6 = getPCIeData(SAMPLE_SIZE * 16, 6)
+        a7 = getPCIeData(SAMPLE_SIZE * 16, 7)
+
+        plot1.update(a0, plot1.curve0)
+        plot1.update(a1, plot1.curve1)
+        plot1.update(a2, plot1.curve2)
+        plot1.update(a3, plot1.curve3)
+        plot1.update(a4, plot1.curve4)
+        plot1.update(a5, plot1.curve5)
+        plot1.update(a6, plot1.curve6)
+        plot1.update(a7, plot1.curve7)
+        plot2.update(a0, plot2.curve0)
+        plot2.update(a1, plot2.curve1)
+        plot2.update(a2, plot2.curve2)
+        plot2.update(a3, plot2.curve3)
+        plot2.update(a4, plot2.curve4)
+        plot2.update(a5, plot2.curve5)
+        plot2.update(a6, plot2.curve6)
+        plot2.update(a7, plot2.curve7)
 
 
         QueensCanyon.saveParamsToJson()
