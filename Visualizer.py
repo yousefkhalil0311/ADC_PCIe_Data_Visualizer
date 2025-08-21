@@ -26,7 +26,7 @@ from QC_Controller import QueensCanyon
 
 #name of pcie device to connect to
 PCIe_Device: str = '/dev/xdma0_c2h_0'
-sharedmemFile: str = 'adc_dump.bin'#'/dev/shm/xdmaPythonStream'
+sharedmemFile: str = 'adc_dump_testfile.bin'#'/dev/shm/xdmaPythonStream'
 
 #Sample Depth
 SAMPLE_SIZE: int = 512
