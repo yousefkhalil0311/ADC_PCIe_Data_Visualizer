@@ -22,11 +22,17 @@ from ParamTools import LineEditColumn
 #global parameter store & hardware controller
 from QC_Controller import QueensCanyon
 
+#database interface class
+from paramWriter import databaseHandler
 
+#params needed to connect to database
+path_to_serviceAccountKey: str = "secrets/db_accountkey.json"
+databaseURL: str = "https://yksdb001-default-rtdb.firebaseio.com"
+databaseReference: str = "/QC_paramStore"
 
 #name of pcie device to connect to
 PCIe_Device: str = '/dev/xdma0_c2h_0'
-sharedmemFile: str = 'adc_dump_testfile.bin'#'/dev/shm/xdmaPythonStream'
+sharedmemFile: str = 'adc_dump_testfile-YousefPC.bin'#'/dev/shm/xdmaPythonStream'
 
 #Sample Depth
 SAMPLE_SIZE: int = 512
@@ -37,6 +43,14 @@ PLOT_UNITS: str = 'mV'
 MIN_PLOT_VALUE: int = 0
 MAX_PLOT_VALUE: int = 200
 
+
+#initialize database interface object
+paramDatabase: databaseHandler = databaseHandler(path_to_serviceAccountKey, databaseURL, databaseReference)
+
+def onChange(event, data):
+    print('db modified')
+
+paramDatabase.listen(onChange)
 
 #with open(sharedmemFile, "wb") as f:
     #f.truncate(BUFFER_SIZE)
@@ -140,7 +154,7 @@ textBox.setMaxLength(12)
 textBox.setFixedWidth(8 * 12)
 
 def callback():
-    QueensCanyon.setParam("aquisitionTime(ms)", textBox.text())
+    QueensCanyon.setParam("aquisitionTime(ms)", int(textBox.text()))
 
 textBox.editingFinished.connect(callback)
 
@@ -206,8 +220,20 @@ def updateall():
         plot2.update(a6, plot2.curve6)
         plot2.update(a7, plot2.curve7)
 
+        #if parameters were updated, update the database
+        if QueensCanyon.saveParamsToJson() == True:
+            paramDatabase.setData(QueensCanyon.getParams())
+            #dataChanged = True
+        
+        #if db params differ from QueensCanyon.getParams():
+            #get db params
+            #update QueensCanyon param store
+            #update gui from paramStore
+            #QueensCanyon.saveParamsToJson()
+            #dataChanged = True
 
-        QueensCanyon.saveParamsToJson()
+        #if instance connected to hardware & dataChanged == True:
+            #program QC hardware
         
     except Exception as e:
 

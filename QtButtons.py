@@ -50,9 +50,9 @@ class RadioButton:
 
         #react when a button is selected
         if checked:
-            QueensCanyon.setParam(f"{self.title}-{self.currentButton}", not checked)
+            QueensCanyon.setParam(f"{self.title}-{self.currentButton}", 0 if checked else 1)
             self.currentButton = radioButton.text()
-            QueensCanyon.setParam(f"{self.title}-{self.currentButton}", checked)
+            QueensCanyon.setParam(f"{self.title}-{self.currentButton}", 1 if checked else 0)
 
     def getSelectedRadioButton(self) -> str:
         return self.currentButton
@@ -85,7 +85,7 @@ class CheckBox:
 
     def checkStateCallback(self) -> None:
         self.isChecked = self.checkBox.isChecked()
-        QueensCanyon.setParam(f"{self.title}", self.isChecked)
+        QueensCanyon.setParam(f"{self.title}", 1 if self.isChecked else 0)
 
     def getCheckState(self) -> bool:
         return self.checkBox.isChecked()

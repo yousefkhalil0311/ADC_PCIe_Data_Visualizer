@@ -57,7 +57,7 @@ class CheckBoxColumn:
     #callback to react to state changes on checkboxes
     def checkBoxCallback(self, index: int, state: int) -> None:
         self.checkBoxes[index][1] = state
-        QueensCanyon.setParam(f"{self.columnName}-{self.labels[index]}", True if state else False)
+        QueensCanyon.setParam(f"{self.columnName}-{self.labels[index]}", 1 if state else 0)
 
     #returns the states of all checkboxes in the column
     def getCheckBoxStates(self) -> list[int]:
@@ -99,7 +99,7 @@ class LineEditColumn:
     #callback to store user input
     def storeTextCallback(self, index: int, text: str) -> None:
         self.lineEdits[index][1] = text
-        QueensCanyon.setParam(f"{self.name}-{index}", text)
+        QueensCanyon.setParam(f"{self.name}-{index}", int(text))
 
     #get string entered in a single lineEdit box
     def getRowText(self, index: int) -> str:
