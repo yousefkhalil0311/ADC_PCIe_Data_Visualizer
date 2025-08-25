@@ -28,11 +28,9 @@ httpx==0.28.1
 hyperframe==6.1.0
 idna==3.10
 iso8601==2.1.0
-logic-weave==0.1.30
 msgpack==1.1.1
 numpy==2.2.5
 proto-plus==1.26.1
-protobuf==6.32.0
 pyasn1==0.6.1
 pyasn1_modules==0.4.2
 pycparser==2.22
