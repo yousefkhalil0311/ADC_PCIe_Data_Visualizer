@@ -24,7 +24,7 @@
     "Select Path-1GHz LP": false,
     "Aquire by-# of Samples": false,
     "Aquire by-time(us)": true,
-    "aquisitionTime(ms)": "300",
+    "aquisitionTime(ms)": "11",
     "Calibration Mode": false,
     "Edge-Rising": false,
     "Edge-Falling": true

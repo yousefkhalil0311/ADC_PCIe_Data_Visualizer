@@ -53,36 +53,37 @@ class ParamInfo:
 #dictionary to map Params to JSON config params
 PARAM_TABLE: dict[Params, ParamInfo] = {
 
-    Params.CH0_EN:              ParamInfo("", 0),
-    Params.CH1_EN:              ParamInfo("", 0),
-    Params.CH2_EN:              ParamInfo("", 0),
-    Params.CH3_EN:              ParamInfo("", 0),
-    Params.CH4_EN:              ParamInfo("", 0),
-    Params.CH5_EN:              ParamInfo("", 0),
-    Params.CH6_EN:              ParamInfo("", 0),
-    Params.CH7_EN:              ParamInfo("", 0),
-    Params.DDC0_EN:             ParamInfo("", 0),
-    Params.DDC1_EN:             ParamInfo("", 0),
-    Params.DDC2_EN:             ParamInfo("", 0),
-    Params.DDC0_FMIX:           ParamInfo("", 0),
-    Params.DDC0_SFOUT:          ParamInfo("", 0),
-    Params.DDC1_FMIX:           ParamInfo("", 0),
-    Params.DDC1_SFOUT:          ParamInfo("", 0),
-    Params.DDC2_FMIX:           ParamInfo("", 0),
-    Params.DDC2_SFOUT:          ParamInfo("", 0),
-    Params.LP500MHZ_EN:         ParamInfo("", 0),
-    Params.LP1GHZ_EN:           ParamInfo("", 0),
-    Params.LP2GHZ_EN:           ParamInfo("", 0),
-    Params.BYPASS_EN:           ParamInfo("", 0),
+    Params.CH0_EN:              ParamInfo("Channel 0-Enable", 0),
+    Params.CH1_EN:              ParamInfo("Channel 1-Enable", 0),
+    Params.CH2_EN:              ParamInfo("Channel 2-Enable", 0),
+    Params.CH3_EN:              ParamInfo("Channel 3-Enable", 0),
+    Params.CH4_EN:              ParamInfo("Channel 4-Enable", 0),
+    Params.CH5_EN:              ParamInfo("Channel 5-Enable", 0),
+    Params.CH6_EN:              ParamInfo("Channel 6-Enable", 0),
+    Params.CH7_EN:              ParamInfo("Channel 7-Enable", 0),
+    Params.DDC0_EN:             ParamInfo("DDC 0-1", 0),
+    Params.DDC1_EN:             ParamInfo("DDC 0-2", 0),
+    Params.DDC2_EN:             ParamInfo("DDC 0-3", 0),
+    Params.DDC0_FMIX:           ParamInfo("Fmix (MHz)-0", 65),
+    Params.DDC0_SFOUT:          ParamInfo("Fmix (MHz)-1", 100),
+    Params.DDC1_FMIX:           ParamInfo("Fmix (MHz)-2", 135),
+    Params.DDC1_SFOUT:          ParamInfo("SFout (Msps)-0", 0),
+    Params.DDC2_FMIX:           ParamInfo("SFout (Msps)-1", 0),
+    Params.DDC2_SFOUT:          ParamInfo("SFout (Msps)-2", 0),
+    Params.LP500MHZ_EN:         ParamInfo("Select Path-500MHz LP", 0),
+    Params.LP1GHZ_EN:           ParamInfo("Select Path-1GHz LP", 0),
+    Params.LP2GHZ_EN:           ParamInfo("Select Path-2GHz LP", 0),
+    Params.BYPASS_EN:           ParamInfo("Select Path-Bypass", 0),
     Params.ATTENUATION_BVAL:    ParamInfo("", 0),
-    Params.SYSTEM_EN:           ParamInfo("", 0),
-    Params.CAL_EN:              ParamInfo("", 0),
-    Params.ACQUIREBYSAMPLES:    ParamInfo("", 0),
-    Params.ACQUIREBYTIME_MS:    ParamInfo("", 0),
-    Params.ACQUISITIONTIME_MS:  ParamInfo("", 0),
+    Params.SYSTEM_EN:           ParamInfo("System-Active", 0),
+    Params.CAL_EN:              ParamInfo("Calibration Mode", 0),
+    Params.ACQUIREBYSAMPLES:    ParamInfo("Aquire by-# of Samples", 0),
+    Params.ACQUIREBYTIME_MS:    ParamInfo("Aquire by-time(us)", 0),
+    Params.ACQUISITIONTIME_MS:  ParamInfo("aquisitionTime(ms)", 0),
     Params.NUMSAMPLES_CAPTURE:  ParamInfo("", 0)
     
 }
+
 
 
 class paramWriter:
@@ -90,7 +91,13 @@ class paramWriter:
     def __init__(self):
         
         return
+    
+    #generates the expected BRAM data given a dictionary mapping Params to config.json params
+    def structureParams(self, paramaterTable: dict[Params, ParamInfo]) -> list[int]:
+        return
+    
     def setParamsFromJSON(self, configFile: str) -> None:
         return
+    2
     def writeParamsToBRAM(self, commandStream: str) -> None:
         return
