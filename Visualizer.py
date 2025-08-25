@@ -32,7 +32,7 @@ databaseReference: str = "/QC_paramStore"
 
 #name of pcie device to connect to
 PCIe_Device: str = '/dev/xdma0_c2h_0'
-sharedmemFile: str = 'adc_dump_testfile-YousefPC.bin'#'/dev/shm/xdmaPythonStream'
+sharedmemFile: str = 'adc_dump_testfile.bin'#'/dev/shm/xdmaPythonStream'
 
 #Sample Depth
 SAMPLE_SIZE: int = 512
@@ -48,9 +48,19 @@ MAX_PLOT_VALUE: int = 200
 paramDatabase: databaseHandler = databaseHandler(path_to_serviceAccountKey, databaseURL, databaseReference)
 
 def onChange(event, data):
-    print('db modified')
+
+    if isinstance(data, dict):
+        if data['data'] and isinstance(data['data'], dict):
+            for key, value in data['data'].items():
+                QueensCanyon.setParam(key, value)
+            
+            paramDatabase.databaseUpdatedFlag = True
+
 
 paramDatabase.listen(onChange)
+
+#keep a reference of all widget instances
+widgetInstances: list = []
 
 #with open(sharedmemFile, "wb") as f:
     #f.truncate(BUFFER_SIZE)
@@ -104,6 +114,8 @@ Ch5Widget: ChannelControlWidget = ChannelControlWidget(5, leftPanel)
 Ch6Widget: ChannelControlWidget = ChannelControlWidget(6, leftPanel)
 Ch7Widget: ChannelControlWidget = ChannelControlWidget(7, leftPanel)
 
+#add widgets to list
+widgetInstances += [Ch0Widget, Ch1Widget, Ch2Widget, Ch3Widget, Ch4Widget, Ch5Widget, Ch6Widget, Ch7Widget]
 
 triggerLayout = QtWidgets.QVBoxLayout()
 
@@ -113,6 +125,9 @@ activateSetting: RadioButton = RadioButton('System', triggerLayout, 'Active', 'D
 triggerSlider: Slider = Slider('Trigger', PLOT_UNITS, MIN_PLOT_VALUE, MAX_PLOT_VALUE, 100, triggerLayout, QtCore.Qt.Vertical)
 
 edgeSetting: RadioButton = RadioButton('Edge', triggerLayout, 'Rising', 'Falling', 'Any', default='Rising')
+
+#add widgets to list
+widgetInstances += [activateSetting, edgeSetting]
 
 plotLayout.addLayout(triggerLayout)
 
@@ -140,6 +155,9 @@ attenuationSlider: Slider = Slider('Attenuation', 'dB', 0, 32, 32, attSliderLayo
 
 calEnable: CheckBox = CheckBox('Calibration Mode', attSliderLayout)
 
+#add widgets to list
+widgetInstances += [pathOptions, calEnable]
+
 main_layout.addLayout(attSliderLayout)
 
 row3Layout = QtWidgets.QHBoxLayout()
@@ -157,6 +175,9 @@ def callback():
     QueensCanyon.setParam("aquisitionTime(ms)", int(textBox.text()))
 
 textBox.editingFinished.connect(callback)
+
+#add widgets to list
+widgetInstances += [numSamplesOrTime]
 
 row3Layout.addWidget(textBox)
 
@@ -220,17 +241,26 @@ def updateall():
         plot2.update(a6, plot2.curve6)
         plot2.update(a7, plot2.curve7)
 
+        paramChanged: bool = False
+
         #if parameters were updated, update the database
         if QueensCanyon.saveParamsToJson() == True:
             paramDatabase.setData(QueensCanyon.getParams())
-            #dataChanged = True
+            paramChanged = True
         
-        #if db params differ from QueensCanyon.getParams():
-            #get db params
-            #update QueensCanyon param store
+        if paramDatabase.databaseUpdatedFlag == True:
+
+            #reset databaseUpdatedFlag
+            paramDatabase.databaseUpdatedFlag = False
+
+            #update JSON with latest params
+            QueensCanyon.saveParamsToJson()
+
             #update gui from paramStore
-            #QueensCanyon.saveParamsToJson()
-            #dataChanged = True
+            for widget in widgetInstances:
+                widget.update()
+
+            paramChanged = True
 
         #if instance connected to hardware & dataChanged == True:
             #program QC hardware

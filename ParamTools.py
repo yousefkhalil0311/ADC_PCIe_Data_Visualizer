@@ -59,6 +59,19 @@ class CheckBoxColumn:
         self.checkBoxes[index][1] = state
         QueensCanyon.setParam(f"{self.columnName}-{self.labels[index]}", 1 if state else 0)
 
+    #function to update widget data from paramStore
+    def update(self) -> None:
+
+        for index, checkBox in enumerate(self.checkBoxes):
+            updatedState = QueensCanyon.getParam(f"{self.columnName}-{self.labels[index]}")
+
+            #check to see if key exists
+            if updatedState is None:
+                return
+            
+            checkBox[0].setChecked(bool(updatedState))
+            checkBox[1] = (updatedState * 2)
+
     #returns the states of all checkboxes in the column
     def getCheckBoxStates(self) -> list[int]:
 
@@ -100,6 +113,19 @@ class LineEditColumn:
     def storeTextCallback(self, index: int, text: str) -> None:
         self.lineEdits[index][1] = text
         QueensCanyon.setParam(f"{self.name}-{index}", int(text))
+
+    #function to update widget data from paramStore
+    def update(self) -> None:
+
+        for index, lineEdit in enumerate(self.lineEdits):
+            updatedState = QueensCanyon.getParam(f"{self.name}-{index}")
+
+            #check to see if key exists
+            if updatedState is None:
+                return
+            
+            lineEdit[0].setText(str(updatedState))
+            lineEdit[1] = (str(updatedState))
 
     #get string entered in a single lineEdit box
     def getRowText(self, index: int) -> str:
@@ -153,6 +179,19 @@ class DropDownColumn:
         self.dropDownBoxes[index][1] = optionString
         QueensCanyon.setParam(f"{self.columnName}-{index}", optionString)
 
+    #function to update widget data from paramStore
+    def update(self) -> None:
+
+        for index, dropDown in enumerate(self.dropDownBoxes):
+            updatedState = QueensCanyon.getParam(f"{self.columnName}-{index}")
+
+            #check to see if key exists
+            if updatedState is None:
+                return
+            
+            dropDown[0].setCurrentIndex(updatedState)
+            dropDown[1] = self.getDropDownOption(updatedState)
+
     #returns the selected option from 1 dropdown box
     def getDropDownOption(self, index: int) -> str:
         return self.dropDownBoxes[index][1]
@@ -196,6 +235,10 @@ class ChannelControlWidget:
             "ddcFmixVals": self.ddcFmixInputs.getAllText(),
             "ddcFsampleVals": self.ddcSampleFreqOptions.getAllDropDownStates()
         }
+    
+    def update(self):
+        self.channelEnableCheck.update()
+        self.ddcCheckboxColumn.update()
 
 
 

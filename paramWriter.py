@@ -130,6 +130,9 @@ class databaseHandler:
         #get reference to database
         self.ref = db.reference(self.databaseReference)
 
+        #flag set True to indicate whether database contents changed. Set false when change is handled
+        self.databaseUpdatedFlag: bool = False
+
         #params for creating thread to listen for db changes
         self.listenerThread = None
         self.stopEvent = threading.Event()
@@ -146,6 +149,7 @@ class databaseHandler:
     def setData(self, data: dict) -> str | None:
 
         self.ref.set(data)
+
 
     #call passed callback function when event occurs
     def actOnEventListener(self, callback):

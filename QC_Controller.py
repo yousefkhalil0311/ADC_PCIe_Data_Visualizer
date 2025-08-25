@@ -60,7 +60,11 @@ class QC_Controller:
 
     # Retrieve a single parameter from the store
     def getParam(self, key: str) -> any:
-        return self.paramStore[key]
+
+        if key in self.paramStore:
+            return self.paramStore[key]
+        else:
+            return None
 
     # Load and return all parameters from self
     def getParams(self) -> dict:

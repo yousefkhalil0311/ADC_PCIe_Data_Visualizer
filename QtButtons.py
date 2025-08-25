@@ -57,7 +57,22 @@ class RadioButton:
     def getSelectedRadioButton(self) -> str:
         return self.currentButton
 
+    #function to update widget data from paramStore
+    def update(self) -> None:
 
+        for radioButton in self.radioButtons:
+
+            updatedState = QueensCanyon.getParam(f"{self.title}-{radioButton.text()}")
+
+            #check to see if key exists
+            if updatedState is None:
+                return
+            
+            radioButton.blockSignals(True)
+            radioButton.setChecked(bool(updatedState))
+            radioButton.blockSignals(False)
+
+            self.currentButton = radioButton.text()
 
 #Class to instantiate checkbox widgets in the parent layout
 class CheckBox:
@@ -86,6 +101,19 @@ class CheckBox:
     def checkStateCallback(self) -> None:
         self.isChecked = self.checkBox.isChecked()
         QueensCanyon.setParam(f"{self.title}", 1 if self.isChecked else 0)
+
+    #function to update widget data from paramStore
+    def update(self) -> None:
+
+        updatedState = QueensCanyon.getParam(f"{self.title}")
+
+        #check to see if key exists
+        if updatedState is None:
+            return
+        
+        self.checkBox.setChecked(bool(updatedState))
+
+        self.isChecked = self.checkBox.isChecked()
 
     def getCheckState(self) -> bool:
         return self.checkBox.isChecked()
