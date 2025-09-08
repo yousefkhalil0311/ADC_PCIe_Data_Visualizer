@@ -24,6 +24,7 @@ from QC_Controller import QueensCanyon
 
 #database interface class
 from paramWriter import databaseHandler
+from paramWriter import paramWriter
 
 #params needed to connect to database
 path_to_serviceAccountKey: str = "secrets/db_accountkey.json"
@@ -32,6 +33,10 @@ databaseReference: str = "/QC_paramStore"
 
 #name of pcie device to connect to
 PCIe_Device: str = '/dev/xdma0_c2h_0'
+
+#name of pcie device to connect to
+PCIe_Device_command_stream: str = '/dev/xdma0_user'
+
 sharedmemFile: str = 'adc_dump_testfile.bin'#'/dev/shm/xdmaPythonStream'
 
 #Sample Depth
@@ -58,6 +63,9 @@ def onChange(event, data):
 
 
 paramDatabase.listen(onChange)
+
+#initialize object to handle writing params to hardware BRAM
+bramProgrammer: paramWriter = paramWriter(PCIe_Device_command_stream, 'config.json')
 
 #keep a reference of all widget instances
 widgetInstances: list = []
@@ -203,6 +211,9 @@ pg.setConfigOptions(useOpenGL=True)
 
 freq = 0
 
+bramProgrammer.setParamsTable()
+print(bramProgrammer.setupBRAM())
+
 #update all plots
 def updateall():
 
@@ -210,36 +221,36 @@ def updateall():
 
     try:
         
-        freq = freq%100000 + 1
+        # freq = freq%100000 + 1
 
-        plot1.setThreshold(triggerSlider.getVal())
-        plot1.setTriggerEdge(edgeSetting.getSelectedRadioButton())
+        # plot1.setThreshold(triggerSlider.getVal())
+        # plot1.setTriggerEdge(edgeSetting.getSelectedRadioButton())
 
-        a0 = getPCIeData(SAMPLE_SIZE * 16, 0)
-        a1 = getPCIeData(SAMPLE_SIZE * 16, 1)
-        a2 = getPCIeData(SAMPLE_SIZE * 16, 2)
-        a3 = getPCIeData(SAMPLE_SIZE * 16, 3)
-        a4 = getPCIeData(SAMPLE_SIZE * 16, 4)
-        a5 = getPCIeData(SAMPLE_SIZE * 16, 5)
-        a6 = getPCIeData(SAMPLE_SIZE * 16, 6)
-        a7 = getPCIeData(SAMPLE_SIZE * 16, 7)
+        # a0 = getPCIeData(SAMPLE_SIZE * 16, 0)
+        # a1 = getPCIeData(SAMPLE_SIZE * 16, 1)
+        # a2 = getPCIeData(SAMPLE_SIZE * 16, 2)
+        # a3 = getPCIeData(SAMPLE_SIZE * 16, 3)
+        # a4 = getPCIeData(SAMPLE_SIZE * 16, 4)
+        # a5 = getPCIeData(SAMPLE_SIZE * 16, 5)
+        # a6 = getPCIeData(SAMPLE_SIZE * 16, 6)
+        # a7 = getPCIeData(SAMPLE_SIZE * 16, 7)
 
-        plot1.update(a0, plot1.curve0)
-        plot1.update(a1, plot1.curve1)
-        plot1.update(a2, plot1.curve2)
-        plot1.update(a3, plot1.curve3)
-        plot1.update(a4, plot1.curve4)
-        plot1.update(a5, plot1.curve5)
-        plot1.update(a6, plot1.curve6)
-        plot1.update(a7, plot1.curve7)
-        plot2.update(a0, plot2.curve0)
-        plot2.update(a1, plot2.curve1)
-        plot2.update(a2, plot2.curve2)
-        plot2.update(a3, plot2.curve3)
-        plot2.update(a4, plot2.curve4)
-        plot2.update(a5, plot2.curve5)
-        plot2.update(a6, plot2.curve6)
-        plot2.update(a7, plot2.curve7)
+        # plot1.update(a0, plot1.curve0)
+        # plot1.update(a1, plot1.curve1)
+        # plot1.update(a2, plot1.curve2)
+        # plot1.update(a3, plot1.curve3)
+        # plot1.update(a4, plot1.curve4)
+        # plot1.update(a5, plot1.curve5)
+        # plot1.update(a6, plot1.curve6)
+        # plot1.update(a7, plot1.curve7)
+        # plot2.update(a0, plot2.curve0)
+        # plot2.update(a1, plot2.curve1)
+        # plot2.update(a2, plot2.curve2)
+        # plot2.update(a3, plot2.curve3)
+        # plot2.update(a4, plot2.curve4)
+        # plot2.update(a5, plot2.curve5)
+        # plot2.update(a6, plot2.curve6)
+        # plot2.update(a7, plot2.curve7)
 
         paramChanged: bool = False
 
@@ -264,6 +275,7 @@ def updateall():
 
         #if instance connected to hardware & dataChanged == True:
             #program QC hardware
+            
         
     except Exception as e:
 
