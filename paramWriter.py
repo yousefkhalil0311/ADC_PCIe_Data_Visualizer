@@ -7,6 +7,7 @@ import json
 import requests
 import os
 import struct
+import time
 
 #global parameter store & hardware controller
 from QC_Controller import QueensCanyon
@@ -77,9 +78,9 @@ PARAM_TABLE: dict[str, ParamInfo] = {
     "DDC 0-1":                  ParamInfo(Params.DDC0_EN,               0),
     "DDC 0-2":                  ParamInfo(Params.DDC1_EN,               0),
     "DDC 0-3":                  ParamInfo(Params.DDC2_EN,               0),
-    "Fmix (MHz)-0":             ParamInfo(Params.DDC0_FMIX,             65),
-    "Fmix (MHz)-1":             ParamInfo(Params.DDC0_SFOUT,            100),
-    "Fmix (MHz)-2":             ParamInfo(Params.DDC1_FMIX,             135),
+    "Fmix (MHz)-0":             ParamInfo(Params.DDC0_FMIX,             10),
+    "Fmix (MHz)-1":             ParamInfo(Params.DDC0_SFOUT,            1),
+    "Fmix (MHz)-2":             ParamInfo(Params.DDC1_FMIX,             1),
     "SFout (Msps)-0":           ParamInfo(Params.DDC1_SFOUT,            1),
     "SFout (Msps)-1":           ParamInfo(Params.DDC2_FMIX,             1),
     "SFout (Msps)-2":           ParamInfo(Params.DDC2_SFOUT,            1),
@@ -87,13 +88,13 @@ PARAM_TABLE: dict[str, ParamInfo] = {
     "Select Path-1GHz LP":      ParamInfo(Params.LP1GHZ_EN,             0),
     "Select Path-2GHz LP":      ParamInfo(Params.LP2GHZ_EN,             0),
     "Select Path-Bypass":       ParamInfo(Params.BYPASS_EN,             0),
-    "":                         ParamInfo(Params.ATTENUATION_BVAL,      0),
+    "attenuation_binVal":       ParamInfo(Params.ATTENUATION_BVAL,      0),
     "System-Active":            ParamInfo(Params.SYSTEM_EN,             0),
     "Calibration Mode":         ParamInfo(Params.CAL_EN,                0),
-    "Aquire by-# of Samples":   ParamInfo(Params.ACQUIREBYSAMPLES,      0),
+    "Aquire by-num of Samples": ParamInfo(Params.ACQUIREBYSAMPLES,      0),
     "Aquire by-time(us)":       ParamInfo(Params.ACQUIREBYTIME_MS,      0),
     "aquisitionTime(ms)":       ParamInfo(Params.ACQUISITIONTIME_MS,    0),
-    "":                         ParamInfo(Params.NUMSAMPLES_CAPTURE,    0),
+    "num of Samples to get":    ParamInfo(Params.NUMSAMPLES_CAPTURE,    0)
 }
 
 QC_SCHEMA: dict[str, int] = {
@@ -137,23 +138,30 @@ class paramWriter:
     def setupBRAM(self) -> bool:
 
         #check to see if the hardware is requesting for param data
-        if True: #self.readPCIeBytes(QC_SCHEMA['statusAddr']) & QC_SCHEMA['BRAM_SETUP_REQUEST']:
+        if True:# self.readPCIeBytes(QC_SCHEMA['statusAddr']) & QC_SCHEMA['BRAM_SETUP_REQUEST']:
 
+            print('Initializing BRAM...')
             self.programBRAM()
 
             #set bram setup complete flag
+            print('Setting BRAM complete flag...')
             status: int = self.readPCIeBytes(QC_SCHEMA['statusAddr'])
 
             status |= QC_SCHEMA['HOST_SETUP_DONE']
 
             self.writePCIeBytes(status, QC_SCHEMA['statusAddr'])
 
-            #reset bram setup complete flag
+            #reset bram setup complete flag after 50ms delay
+            time.sleep(50 / 1000)
+
+            print('Resetting BRAM complete flag...')
             status: int = self.readPCIeBytes(QC_SCHEMA['statusAddr'])
 
             status &= ~QC_SCHEMA['HOST_SETUP_DONE']
 
             self.writePCIeBytes(status, QC_SCHEMA['statusAddr'])
+
+            return True
 
         else:
 
@@ -177,7 +185,8 @@ class paramWriter:
         self.writePCIeBytes(QC_SCHEMA['startToken'], QC_SCHEMA['startTokenAddr'])
 
         #write number of params to BRAM
-        self.writePCIeBytes(QC_SCHEMA['numParamsAddr'], len(PARAM_TABLE.keys()))
+        print(len(PARAM_TABLE.keys()), "this is the num of params")
+        self.writePCIeBytes(len(PARAM_TABLE.keys()), QC_SCHEMA['numParamsAddr'])
         
         #write end header token
         self.writePCIeBytes(QC_SCHEMA['endHeaderToken'], QC_SCHEMA['endHeaderAddr'])
@@ -239,7 +248,7 @@ class paramWriter:
             try:
                 PARAM_TABLE[key].val = QueensCanyon.paramStore[key]
             except KeyError:
-                print('Key in PARAM_TABLE does not exist in the QC_Controller.')
+                print(f'Key {key} in PARAM_TABLE does not exist in the QC_Controller.')
 
     
     #set the file path for the file stream to write to BRAM content

@@ -20,9 +20,9 @@ class QC_Controller:
             "DDC 0-1": 0,
             "DDC 0-2": 0,
             "DDC 0-3": 0,
-            "Fmix (MHz)-0": 65,
-            "Fmix (MHz)-1": 100,
-            "Fmix (MHz)-2": 135,
+            "Fmix (MHz)-0": 1,
+            "Fmix (MHz)-1": 1,
+            "Fmix (MHz)-2": 1,
             "SFout (Msps)-0": 1,
             "SFout (Msps)-1": 1,
             "SFout (Msps)-2": 1,
@@ -32,13 +32,15 @@ class QC_Controller:
             "Select Path-Bypass": 0,
             "Select Path-2GHz LP": 0,
             "Select Path-1GHz LP": 0,
-            "Aquire by-number of Samples": 0,
+            "Aquire by-num of Samples": 0,
+            "attenuation_binVal": 63,
             "Aquire by-time(us)": 1,
             "aquisitionTime(ms)": 10,
             "Calibration Mode": 0,
             "Edge-Rising": 1,
             "Edge-Falling": 0,
-            "Edge-Any": 0
+            "Edge-Any": 0,
+            "num of Samples to get": 0
         } 
 
         self.configFile = 'config.json'
