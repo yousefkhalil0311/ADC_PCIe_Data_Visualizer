@@ -96,6 +96,32 @@ def getPCIeData(numValues: int, offset: int) -> np.ndarray | None: #return array
         #mm.close()
 
     return None
+
+def getPCIeStreamData(stream: str, numValues: int, channel: int, component: str):
+
+    try:
+        fd: int = os.open(stream, os.O_RDONLY)
+
+        offset: int = channel * 2 + componentMap[component]
+
+        data: bytes = os.read(fd, offset + numValues * 2 * 16)
+
+        os.close(fd)
+
+        componentMap: dict[str, int] = {
+            'I': 0,
+            'Q': 1
+        }
+
+
+        returnBuffer: np.ndarray = np.frombuffer(data, dtype=np.dtype('<i2'))[offset:-1:16]
+
+        return returnBuffer
+    
+    except KeyboardInterrupt:
+        print('Done. ')
+    finally:
+        pass
     
 app = pg.mkQApp("ADC_PCIe_Data_Visualizer")
 
@@ -211,8 +237,8 @@ pg.setConfigOptions(useOpenGL=True)
 
 freq = 0
 
-bramProgrammer.setParamsTable()
-print(bramProgrammer.setupBRAM())
+#bramProgrammer.setParamsTable()
+#print(bramProgrammer.setupBRAM())
 
 #update all plots
 def updateall():
@@ -223,20 +249,28 @@ def updateall():
         
         # freq = freq%100000 + 1
 
-        # plot1.setThreshold(triggerSlider.getVal())
-        # plot1.setTriggerEdge(edgeSetting.getSelectedRadioButton())
+        plot1.setThreshold(triggerSlider.getVal())
+        plot1.setTriggerEdge(edgeSetting.getSelectedRadioButton())
 
-        # a0 = getPCIeData(SAMPLE_SIZE * 16, 0)
-        # a1 = getPCIeData(SAMPLE_SIZE * 16, 1)
-        # a2 = getPCIeData(SAMPLE_SIZE * 16, 2)
-        # a3 = getPCIeData(SAMPLE_SIZE * 16, 3)
-        # a4 = getPCIeData(SAMPLE_SIZE * 16, 4)
-        # a5 = getPCIeData(SAMPLE_SIZE * 16, 5)
-        # a6 = getPCIeData(SAMPLE_SIZE * 16, 6)
-        # a7 = getPCIeData(SAMPLE_SIZE * 16, 7)
+        i0 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE * 16, 0, 'I')
+        q0 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE * 16, 0, 'Q')
+        i1 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE * 16, 1, 'I')
+        q1 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE * 16, 1, 'Q')
+        i2 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE * 16, 2, 'I')
+        q2 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE * 16, 2, 'Q')
+        i3 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE * 16, 3, 'I')
+        q3 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE * 16, 3, 'Q')
+        i4 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE * 16, 4, 'I')
+        q4 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE * 16, 4, 'Q')
+        i5 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE * 16, 5, 'I')
+        q5 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE * 16, 5, 'Q')
+        i6 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE * 16, 6, 'I')
+        q6 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE * 16, 6, 'Q')
+        i7 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE * 16, 7, 'I')
+        q7 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE * 16, 7, 'Q')
 
-        # plot1.update(a0, plot1.curve0)
-        # plot1.update(a1, plot1.curve1)
+        plot1.update(i0, plot1.curve0)
+        plot1.update(q0, plot1.curve1)
         # plot1.update(a2, plot1.curve2)
         # plot1.update(a3, plot1.curve3)
         # plot1.update(a4, plot1.curve4)
