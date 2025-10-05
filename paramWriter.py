@@ -138,7 +138,7 @@ class paramWriter:
     def setupBRAM(self) -> bool:
 
         #check to see if the hardware is requesting for param data
-        if True:# self.readPCIeBytes(QC_SCHEMA['statusAddr']) & QC_SCHEMA['BRAM_SETUP_REQUEST']:
+        if self.readPCIeBytes(QC_SCHEMA['statusAddr']) & QC_SCHEMA['BRAM_SETUP_REQUEST']:
 
             print('Initializing BRAM...')
             self.programBRAM()
@@ -241,15 +241,81 @@ class paramWriter:
 
         return True
 
+    #signals to device that a parameter will be updated, and updates required fields
+    def updateBRAM(self, paramIndex: int) -> bool:
+
+        print(f'Updating BRAM parameter with index: {paramIndex}')
+
+        #set param change request bit
+        status: int = self.readPCIeBytes(QC_SCHEMA['statusAddr'])
+
+        status |= QC_SCHEMA['HOST_PARAM_CHANGE']
+
+        self.writePCIeBytes(status, QC_SCHEMA['statusAddr'])
+
+        #wait for hardware to acknowledge param change request
+        while not (self.readPCIeBytes(QC_SCHEMA['statusAddr']) & QC_SCHEMA['PARAM_CHANGE_ACK']):
+            pass
+
+        #reset param change request bit
+        status &= ~QC_SCHEMA['HOST_PARAM_CHANGE']
+
+        self.writePCIeBytes(status, QC_SCHEMA['statusAddr'])
+
+        #we will reprogram all contents of BRAM. This is fine so data doesn't corrupt, but should be modified to only rewrite target data
+        programStatus: bool = self.programBRAM()
+
+        if not programStatus:
+
+            print('failed to update BRAM param')
+
+            return programStatus
+
+        else:
+
+            #write index of changed param into BRAM
+            status |= (paramIndex & 0xFFFF)
+
+            self.writePCIeBytes(status, QC_SCHEMA['statusAddr'])
+
+            #set param change done bit into BRAM
+            status |= QC_SCHEMA['PARAM_CHANGE_DONE']
+
+            self.writePCIeBytes(status, QC_SCHEMA['statusAddr'])
+
+        #device should reset acknowledge bit once host signals the param change has been complete
+        while (self.readPCIeBytes(QC_SCHEMA['statusAddr']) & QC_SCHEMA['PARAM_CHANGE_ACK']):
+            pass
+
+        #reset param change done bit
+        status &= ~QC_SCHEMA['PARAM_CHANGE_DONE']
+
+        self.writePCIeBytes(status, QC_SCHEMA['statusAddr'])
+
+        #if we reach this point, the hardware has accepted the param change
+        return True
     
     #set PARAM_TABLE to reflect the QC_Controller param store
-    def setParamsTable(self):
+    def setParamsTable(self) -> None:
         for key in PARAM_TABLE.keys():
             try:
                 PARAM_TABLE[key].val = QueensCanyon.paramStore[key]
             except KeyError:
                 print(f'Key {key} in PARAM_TABLE does not exist in the QC_Controller.')
 
+    #returns Index of parameter whose value doesn't match between QueensCanyon.paramStore and PARAM_TABLE. If multiple, returns only first index
+    def getChangedParamIndex(self) -> int:
+
+        for index, key in enumerate(PARAM_TABLE.keys()):
+            try:
+                if PARAM_TABLE[key].val != QueensCanyon.paramStore[key]:
+                    return index
+            except KeyError:
+                print(f'Key {key} in PARAM_TABLE does not exist in the QC_Controller.')
+                return -1
+        
+        #if no mismatches were found, return -1
+        return -1
     
     #set the file path for the file stream to write to BRAM content
     def setCommandStream(self, commandFilePath: str) -> None:

@@ -29,7 +29,7 @@ from paramWriter import paramWriter
 #params needed to connect to database
 path_to_serviceAccountKey: str = "secrets/db_accountkey.json"
 databaseURL: str = "https://yksdb001-default-rtdb.firebaseio.com"
-databaseReference: str = "/QC_paramStore"
+databaseReference: str = "QC_paramStore"
 
 #name of pcie device to connect to
 PCIe_Device: str = '/dev/xdma0_c2h_0'
@@ -37,7 +37,7 @@ PCIe_Device: str = '/dev/xdma0_c2h_0'
 #name of pcie device to connect to
 PCIe_Device_command_stream: str = '/dev/xdma0_user'
 
-sharedmemFile: str = 'adc_dump_testfile.bin'#'/dev/shm/xdmaPythonStream'
+sharedmemFile: str = '/dev/shm/xdmaPythonStream'
 
 #Sample Depth
 SAMPLE_SIZE: int = 512
@@ -48,7 +48,7 @@ PLOT_UNITS: str = 'mV'
 MIN_PLOT_VALUE: int = 0
 MAX_PLOT_VALUE: int = 200
 
-
+'''
 #initialize database interface object
 paramDatabase: databaseHandler = databaseHandler(path_to_serviceAccountKey, databaseURL, databaseReference)
 
@@ -63,6 +63,7 @@ def onChange(event, data):
 
 
 paramDatabase.listen(onChange)
+'''
 
 #initialize object to handle writing params to hardware BRAM
 bramProgrammer: paramWriter = paramWriter(PCIe_Device_command_stream, 'config.json')
@@ -73,8 +74,8 @@ widgetInstances: list = []
 #with open(sharedmemFile, "wb") as f:
     #f.truncate(BUFFER_SIZE)
 
-with open(sharedmemFile, "r+b") as f:
-    mm = mmap.mmap(f.fileno(), BUFFER_SIZE, access=mmap.ACCESS_READ)
+#with open(sharedmemFile, "r+b") as f:
+    #mm = mmap.mmap(f.fileno(), BUFFER_SIZE, access=mmap.ACCESS_READ)
 
 
 #Function definitions begin
@@ -99,20 +100,19 @@ def getPCIeData(numValues: int, offset: int) -> np.ndarray | None: #return array
 
 def getPCIeStreamData(stream: str, numValues: int, channel: int, component: str):
 
+    componentMap: dict[str, int] = {
+        'I': 0,
+        'Q': 1
+    }
+    
     try:
         fd: int = os.open(stream, os.O_RDONLY)
 
         offset: int = channel * 2 + componentMap[component]
 
-        data: bytes = os.read(fd, offset + numValues * 2 * 16)
+        data: bytes = os.read(fd, numValues * 2 * 16)
 
         os.close(fd)
-
-        componentMap: dict[str, int] = {
-            'I': 0,
-            'Q': 1
-        }
-
 
         returnBuffer: np.ndarray = np.frombuffer(data, dtype=np.dtype('<i2'))[offset:-1:16]
 
@@ -237,8 +237,8 @@ pg.setConfigOptions(useOpenGL=True)
 
 freq = 0
 
-#bramProgrammer.setParamsTable()
-#print(bramProgrammer.setupBRAM())
+bramProgrammer.setParamsTable()
+print(bramProgrammer.setupBRAM())
 
 #update all plots
 def updateall():
@@ -252,48 +252,48 @@ def updateall():
         plot1.setThreshold(triggerSlider.getVal())
         plot1.setTriggerEdge(edgeSetting.getSelectedRadioButton())
 
-        i0 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE * 16, 0, 'I')
-        q0 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE * 16, 0, 'Q')
-        i1 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE * 16, 1, 'I')
-        q1 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE * 16, 1, 'Q')
-        i2 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE * 16, 2, 'I')
-        q2 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE * 16, 2, 'Q')
-        i3 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE * 16, 3, 'I')
-        q3 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE * 16, 3, 'Q')
-        i4 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE * 16, 4, 'I')
-        q4 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE * 16, 4, 'Q')
-        i5 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE * 16, 5, 'I')
-        q5 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE * 16, 5, 'Q')
-        i6 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE * 16, 6, 'I')
-        q6 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE * 16, 6, 'Q')
-        i7 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE * 16, 7, 'I')
-        q7 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE * 16, 7, 'Q')
+        #i0 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 0, 'I')
+        # q0 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 0, 'Q')
+        # i1 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 1, 'I')
+        # q1 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 1, 'Q')
+        # i2 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 2, 'I')
+        # q2 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 2, 'Q')
+        # i3 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 3, 'I')
+        # q3 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 3, 'Q')
+        # i4 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 4, 'I')
+        # q4 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 4, 'Q')
+        # i5 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 5, 'I')
+        # q5 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 5, 'Q')
+        # i6 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 6, 'I')
+        # q6 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 6, 'Q')
+        # i7 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 7, 'I')
+        # q7 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 7, 'Q')
 
-        plot1.update(i0, plot1.curve0)
-        plot1.update(q0, plot1.curve1)
-        # plot1.update(a2, plot1.curve2)
-        # plot1.update(a3, plot1.curve3)
-        # plot1.update(a4, plot1.curve4)
-        # plot1.update(a5, plot1.curve5)
-        # plot1.update(a6, plot1.curve6)
-        # plot1.update(a7, plot1.curve7)
-        # plot2.update(a0, plot2.curve0)
-        # plot2.update(a1, plot2.curve1)
-        # plot2.update(a2, plot2.curve2)
-        # plot2.update(a3, plot2.curve3)
-        # plot2.update(a4, plot2.curve4)
-        # plot2.update(a5, plot2.curve5)
-        # plot2.update(a6, plot2.curve6)
-        # plot2.update(a7, plot2.curve7)
+        #plot1.update(i0, plot1.curve0)
+        # plot1.update(i1, plot1.curve1)
+        # plot1.update(i2, plot1.curve2)
+        # plot1.update(i3, plot1.curve3)
+        # plot1.update(i4, plot1.curve4)
+        # plot1.update(i5, plot1.curve5)
+        # plot1.update(i6, plot1.curve6)
+        # plot1.update(i7, plot1.curve7)
+        #plot2.update(i0, plot2.curve0)
+        # plot2.update(i1, plot2.curve1)
+        # plot2.update(i2, plot2.curve2)
+        # plot2.update(i3, plot2.curve3)
+        # plot2.update(i4, plot2.curve4)
+        # plot2.update(i5, plot2.curve5)
+        # plot2.update(i6, plot2.curve6)
+        # plot2.update(i7, plot2.curve7)
 
         paramChanged: bool = False
 
         #if parameters were updated, update the database
         if QueensCanyon.saveParamsToJson() == True:
-            paramDatabase.setData(QueensCanyon.getParams())
+            #paramDatabase.setData(QueensCanyon.getParams())
             paramChanged = True
         
-        if paramDatabase.databaseUpdatedFlag == True:
+        if False: #paramDatabase.databaseUpdatedFlag == True:
 
             #reset databaseUpdatedFlag
             paramDatabase.databaseUpdatedFlag = False
@@ -307,8 +307,13 @@ def updateall():
 
             paramChanged = True
 
-        #if instance connected to hardware & dataChanged == True:
+        #if instance connected to hardware & dataChanged is True:
+        if os.path.exists(PCIe_Device_command_stream) and paramChanged:
+
             #program QC hardware
+            changedIndex: int = bramProgrammer.getChangedParamIndex()
+            bramProgrammer.setParamsTable()
+            print(bramProgrammer.updateBRAM(changedIndex))
             
         
     except Exception as e:
