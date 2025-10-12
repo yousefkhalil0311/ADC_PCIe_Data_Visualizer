@@ -79,16 +79,16 @@ PARAM_TABLE: dict[str, ParamInfo] = {
     "DDC 0-2":                  ParamInfo(Params.DDC1_EN,               0),
     "DDC 0-3":                  ParamInfo(Params.DDC2_EN,               0),
     "Fmix (MHz)-0":             ParamInfo(Params.DDC0_FMIX,             10),
-    "Fmix (MHz)-1":             ParamInfo(Params.DDC0_SFOUT,            1),
-    "Fmix (MHz)-2":             ParamInfo(Params.DDC1_FMIX,             1),
-    "SFout (Msps)-0":           ParamInfo(Params.DDC1_SFOUT,            1),
-    "SFout (Msps)-1":           ParamInfo(Params.DDC2_FMIX,             1),
+    "SFout (Msps)-0":           ParamInfo(Params.DDC0_SFOUT,            1),
+    "Fmix (MHz)-1":             ParamInfo(Params.DDC1_FMIX,             1),
+    "SFout (Msps)-1":           ParamInfo(Params.DDC1_SFOUT,            1),
+    "Fmix (MHz)-2":             ParamInfo(Params.DDC2_FMIX,             1),
     "SFout (Msps)-2":           ParamInfo(Params.DDC2_SFOUT,            1),
     "Select Path-500MHz LP":    ParamInfo(Params.LP500MHZ_EN,           1),
     "Select Path-1GHz LP":      ParamInfo(Params.LP1GHZ_EN,             0),
     "Select Path-2GHz LP":      ParamInfo(Params.LP2GHZ_EN,             0),
     "Select Path-Bypass":       ParamInfo(Params.BYPASS_EN,             0),
-    "attenuation_binVal":       ParamInfo(Params.ATTENUATION_BVAL,      0),
+    "Attenuation":              ParamInfo(Params.ATTENUATION_BVAL,      0),
     "System-Active":            ParamInfo(Params.SYSTEM_EN,             0),
     "Calibration Mode":         ParamInfo(Params.CAL_EN,                0),
     "Aquire by-num of Samples": ParamInfo(Params.ACQUIREBYSAMPLES,      0),
@@ -258,7 +258,7 @@ class paramWriter:
             pass
 
         #reset param change request bit
-        status &= ~QC_SCHEMA['HOST_PARAM_CHANGE']
+        status = self.readPCIeBytes(QC_SCHEMA['statusAddr']) & ~QC_SCHEMA['HOST_PARAM_CHANGE']
 
         self.writePCIeBytes(status, QC_SCHEMA['statusAddr'])
 
@@ -274,12 +274,12 @@ class paramWriter:
         else:
 
             #write index of changed param into BRAM
-            status |= (paramIndex & 0xFFFF)
+            status = self.readPCIeBytes(QC_SCHEMA['statusAddr']) | (paramIndex & 0xFFFF)
 
             self.writePCIeBytes(status, QC_SCHEMA['statusAddr'])
 
             #set param change done bit into BRAM
-            status |= QC_SCHEMA['PARAM_CHANGE_DONE']
+            status = self.readPCIeBytes(QC_SCHEMA['statusAddr']) | QC_SCHEMA['PARAM_CHANGE_DONE']
 
             self.writePCIeBytes(status, QC_SCHEMA['statusAddr'])
 
@@ -288,7 +288,7 @@ class paramWriter:
             pass
 
         #reset param change done bit
-        status &= ~QC_SCHEMA['PARAM_CHANGE_DONE']
+        status = self.readPCIeBytes(QC_SCHEMA['statusAddr']) & ~QC_SCHEMA['PARAM_CHANGE_DONE']
 
         self.writePCIeBytes(status, QC_SCHEMA['statusAddr'])
 

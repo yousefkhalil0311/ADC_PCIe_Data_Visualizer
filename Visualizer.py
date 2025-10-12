@@ -185,7 +185,7 @@ attSliderLayout = QtWidgets.QHBoxLayout()
 
 pathOptions: RadioButton = RadioButton('Select Path', attSliderLayout, '500MHz LP', '1GHz LP', '2GHz LP', 'Bypass', default='500MHz LP')
 
-attenuationSlider: Slider = Slider('Attenuation', 'dB', 0, 32, 32, attSliderLayout, QtCore.Qt.Horizontal)
+attenuationSlider: Slider = Slider('Attenuation', 'dB', 0, 31, 31, attSliderLayout, QtCore.Qt.Horizontal)
 
 calEnable: CheckBox = CheckBox('Calibration Mode', attSliderLayout)
 
@@ -198,7 +198,7 @@ row3Layout = QtWidgets.QHBoxLayout()
 
 fileBrowser: BrowserManager = BrowserManager('Save File', row3Layout)
 
-numSamplesOrTime: RadioButton = RadioButton('Aquire by', row3Layout, '# of Samples', 'time(us)', default='# of Samples')
+numSamplesOrTime: RadioButton = RadioButton('Aquire by', row3Layout, 'num of Samples', 'time(ms)', default='num of Samples')
 
 textBox: QtWidgets.QLineEdit = QtWidgets.QLineEdit()
 
@@ -237,8 +237,8 @@ pg.setConfigOptions(useOpenGL=True)
 
 freq = 0
 
-bramProgrammer.setParamsTable()
-print(bramProgrammer.setupBRAM())
+#bramProgrammer.setParamsTable()
+#print(bramProgrammer.setupBRAM())
 
 #update all plots
 def updateall():
@@ -252,31 +252,31 @@ def updateall():
         plot1.setThreshold(triggerSlider.getVal())
         plot1.setTriggerEdge(edgeSetting.getSelectedRadioButton())
 
-        #i0 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 0, 'I')
-        # q0 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 0, 'Q')
-        # i1 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 1, 'I')
+        i0 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 0, 'I')
+        #q0 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 0, 'Q')
+        i1 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 1, 'I')
         # q1 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 1, 'Q')
-        # i2 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 2, 'I')
+        i2 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 2, 'I')
         # q2 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 2, 'Q')
-        # i3 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 3, 'I')
+        i3 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 3, 'I')
         # q3 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 3, 'Q')
-        # i4 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 4, 'I')
+        i4 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 4, 'I')
         # q4 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 4, 'Q')
-        # i5 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 5, 'I')
+        i5 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 5, 'I')
         # q5 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 5, 'Q')
-        # i6 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 6, 'I')
+        i6 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 6, 'I')
         # q6 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 6, 'Q')
-        # i7 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 7, 'I')
+        i7 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 7, 'I')
         # q7 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 7, 'Q')
 
-        #plot1.update(i0, plot1.curve0)
-        # plot1.update(i1, plot1.curve1)
-        # plot1.update(i2, plot1.curve2)
-        # plot1.update(i3, plot1.curve3)
-        # plot1.update(i4, plot1.curve4)
-        # plot1.update(i5, plot1.curve5)
-        # plot1.update(i6, plot1.curve6)
-        # plot1.update(i7, plot1.curve7)
+        plot1.update(i0, plot1.curve0)
+        plot1.update(i1, plot1.curve1)
+        plot1.update(i2, plot1.curve2)
+        plot1.update(i3, plot1.curve3)
+        plot1.update(i4, plot1.curve4)
+        plot1.update(i5, plot1.curve5)
+        plot1.update(i6, plot1.curve6)
+        plot1.update(i7, plot1.curve7)
         #plot2.update(i0, plot2.curve0)
         # plot2.update(i1, plot2.curve1)
         # plot2.update(i2, plot2.curve2)
@@ -291,7 +291,8 @@ def updateall():
         #if parameters were updated, update the database
         if QueensCanyon.saveParamsToJson() == True:
             #paramDatabase.setData(QueensCanyon.getParams())
-            paramChanged = True
+            #paramChanged = True
+            pass
         
         if False: #paramDatabase.databaseUpdatedFlag == True:
 

@@ -2,6 +2,9 @@ import numpy
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
 
+#global parameter store & hardware controller
+from QC_Controller import QueensCanyon
+
 '''
 Class to instantiate a slider to be inserted into a pyqtgraph window
 
@@ -20,7 +23,7 @@ class Slider:
         self.unit: str = unit
 
         self.label = QtWidgets.QLabel("Uninitialized Label")
-        self.setVal(self.val)
+        self.updateSlider(self.val)
 
         #add label to layout
         layout.addWidget(self.label)
@@ -32,16 +35,17 @@ class Slider:
         self.slider.setValue(self.val)
         
         #attach setVal callback to react to slider changes
-        self.slider.valueChanged.connect(self.setVal)
+        self.slider.valueChanged.connect(self.updateSlider)
 
         #add slider to layout
         layout.addWidget(self.slider)
 
 
     #sets the value of the slider
-    def setVal(self, val: int) -> None:
+    def updateSlider(self, val: int) -> None:
         self.val = val
         self.label.setText(f"{self.title}\n{str(self.val)} {self.unit}")
+        QueensCanyon.setParam(f"{self.title}", self.val)
 
     #gets the value of the slider
     def getVal(self) -> int:
