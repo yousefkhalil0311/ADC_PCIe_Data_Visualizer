@@ -97,21 +97,41 @@ def getPCIeData(numValues: int, offset: int) -> np.ndarray | None: #return array
 
     return None
 
-def getPCIeStreamData(stream: str, numValues: int, channel: int, component: str):
+def openPCIeStream(stream: str) -> int:
+    try:
 
-    componentMap: dict[str, int] = {
-        'I': 0,
-        'Q': 1
-    }
+        fd: int = os.open(stream, os.O_RDONLY)
+
+        return fd
+    
+    except KeyboardInterrupt:
+        print('Done. ')
+    finally:
+        pass
+
+def closePCIeStream(fd: int) -> int:
+    try:
+
+        os.close(fd)
+    
+    except KeyboardInterrupt:
+        print('Done. ')
+    finally:
+        pass
+
+
+componentMap: dict[str, int] = {
+    'I': 0,
+    'Q': 1
+}
+
+def getPCIeChannelData(fd: int, numValues: int, channel: int, component: str) -> np.ndarray:
     
     try:
-        fd: int = os.open(stream, os.O_RDONLY)
 
         offset: int = channel * 2 + componentMap[component]
 
         data: bytes = os.read(fd, numValues * 2 * 16)
-
-        os.close(fd)
 
         returnBuffer: np.ndarray = np.frombuffer(data, dtype=np.dtype('<i2'))[offset:-1:16]
 
@@ -119,6 +139,42 @@ def getPCIeStreamData(stream: str, numValues: int, channel: int, component: str)
     
     except KeyboardInterrupt:
         print('Done. ')
+    finally:
+        pass
+
+#gets sample data over pcie and organizes into dictionary for each channel
+def getPCIeStreamData(fd: int, numValues: int) -> dict[str, np.ndarray]:
+
+    try:
+
+        os.lseek(fd, 0, os.SEEK_SET)
+
+        data: bytes = os.read(fd, numValues * 2 * 16)
+
+        returnDict: dict[str, np.ndarray] = {
+            'I0': np.frombuffer(data, dtype=np.dtype('<i2'))[0:-1:16],
+            'Q0': np.frombuffer(data, dtype=np.dtype('<i2'))[1:-1:16],
+            'I1': np.frombuffer(data, dtype=np.dtype('<i2'))[2:-1:16],
+            'Q1': np.frombuffer(data, dtype=np.dtype('<i2'))[3:-1:16],
+            'I2': np.frombuffer(data, dtype=np.dtype('<i2'))[4:-1:16],
+            'Q2': np.frombuffer(data, dtype=np.dtype('<i2'))[5:-1:16],
+            'I3': np.frombuffer(data, dtype=np.dtype('<i2'))[6:-1:16],
+            'Q3': np.frombuffer(data, dtype=np.dtype('<i2'))[7:-1:16],
+            'I4': np.frombuffer(data, dtype=np.dtype('<i2'))[8:-1:16],
+            'Q4': np.frombuffer(data, dtype=np.dtype('<i2'))[9:-1:16],
+            'I5': np.frombuffer(data, dtype=np.dtype('<i2'))[10:-1:16],
+            'Q5': np.frombuffer(data, dtype=np.dtype('<i2'))[11:-1:16],
+            'I6': np.frombuffer(data, dtype=np.dtype('<i2'))[12:-1:16],
+            'Q6': np.frombuffer(data, dtype=np.dtype('<i2'))[13:-1:16],
+            'I7': np.frombuffer(data, dtype=np.dtype('<i2'))[14:-1:16],
+            'Q7': np.frombuffer(data, dtype=np.dtype('<i2'))[15:-1:16],
+        }
+
+        return returnDict
+
+    except KeyboardInterrupt:
+        print('Done.')
+    
     finally:
         pass
     
@@ -236,8 +292,10 @@ pg.setConfigOptions(useOpenGL=True)
 
 freq = 0
 
-#bramProgrammer.setParamsTable()
-#print(bramProgrammer.setupBRAM())
+bramProgrammer.setParamsTable()
+print(bramProgrammer.setupBRAM())
+
+fd: int = openPCIeStream(PCIe_Device)
 
 #update all plots
 def updateall():
@@ -250,6 +308,10 @@ def updateall():
 
         plot1.setThreshold(triggerSlider.getVal())
         plot1.setTriggerEdge(edgeSetting.getSelectedRadioButton())
+        print('getting data')
+
+        data: dict[str, np.ndarray] = getPCIeStreamData(fd, SAMPLE_SIZE)
+        print('got data')
 
         #i0 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 0, 'I')
         #q0 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 0, 'Q')
@@ -268,7 +330,23 @@ def updateall():
         #i7 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 7, 'I')
         # q7 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 7, 'Q')
 
-        #plot1.update(i0, plot1.curve0)
+        plot1.update(data['I0'], plot1.curve0)
+        plot1.update(data['I1'], plot1.curve1)
+        plot1.update(data['I2'], plot1.curve2)
+        plot1.update(data['I3'], plot1.curve3)
+        plot1.update(data['I4'], plot1.curve4)
+        plot1.update(data['I5'], plot1.curve5)
+        plot1.update(data['I6'], plot1.curve6)
+        plot1.update(data['I7'], plot1.curve7)
+        plot2.update(data['I0'], plot2.curve0)
+        plot2.update(data['I1'], plot2.curve1)
+        plot2.update(data['I2'], plot2.curve2)
+        plot2.update(data['I3'], plot2.curve3)
+        plot2.update(data['I4'], plot2.curve4)
+        plot2.update(data['I5'], plot2.curve5)
+        plot2.update(data['I6'], plot2.curve6)
+        plot2.update(data['I7'], plot2.curve7)
+        print('updated plot')
         #plot1.update(i1, plot1.curve1)
         #plot1.update(i2, plot1.curve2)
         #plot1.update(i3, plot1.curve3)
@@ -291,8 +369,10 @@ def updateall():
         if QueensCanyon.saveParamsToJson() == True:
             paramDatabase.setData(QueensCanyon.getParams())
             paramChanged = True
+            print('save')
         
         if paramDatabase.databaseUpdatedFlag == True:
+            print('db2')
 
             #reset databaseUpdatedFlag
             paramDatabase.databaseUpdatedFlag = False
@@ -305,14 +385,17 @@ def updateall():
                 widget.update()
 
             paramChanged = True
+            print('db2')
 
         #if instance connected to hardware & dataChanged is True:
         if os.path.exists(PCIe_Device_command_stream) and paramChanged:
+            print('ex')
 
             #program QC hardware
             changedIndex: int = bramProgrammer.getChangedParamIndex()
             bramProgrammer.setParamsTable()
             print(bramProgrammer.updateBRAM(changedIndex))
+            print('ex2')
             
         
     except Exception as e:
@@ -324,7 +407,7 @@ def updateall():
 
 timer = QtCore.QTimer()
 timer.timeout.connect(updateall)
-timer.start(10)
+timer.start(100)
 
 
 #show window and execute plot updates
