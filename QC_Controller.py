@@ -52,6 +52,8 @@ class QC_Controller:
             with open(self.configFile, 'w') as configFile:
                 json.dump(self.paramStore, configFile, indent=4)
 
+        self.storeMatchesJSON: bool = True
+
     # Set a custom config file name
     def setConfigFile(self, fileName: str) -> None:
         self.configFile = fileName
@@ -59,6 +61,7 @@ class QC_Controller:
     # Update a single parameter in the store
     def setParam(self, key: str, value: any) -> None:
         self.paramStore[key] = value
+        self.storeMatchesJSON = False
 
     # Retrieve a single parameter from the store
     def getParam(self, key: str) -> any:
@@ -80,11 +83,12 @@ class QC_Controller:
     #return True if JSON file updated, false if no changes were made.
     def saveParamsToJson(self) -> bool:
 
-        if self.paramStore == self.getParamsFromJson():
+        if self.storeMatchesJSON:
             return False
         
         with open(self.configFile, 'w') as configFile:
             json.dump(self.paramStore, configFile, indent=4)
+            self.storeMatchesJSON = True
             return True
 
     # Load parameters from JSON file into paramStore

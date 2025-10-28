@@ -40,13 +40,13 @@ PCIe_Device_command_stream: str = '/dev/xdma0_user'
 sharedmemFile: str = '/dev/shm/xdmaPythonStream'
 
 #Sample Depth
-SAMPLE_SIZE: int = 512
-BUFFER_SIZE: int = 512*16
+SAMPLE_SIZE: int = 32
+BUFFER_SIZE: int = SAMPLE_SIZE*16
 
 #Graph Parameters
 PLOT_UNITS: str = 'mV'
-MIN_PLOT_VALUE: int = 0
-MAX_PLOT_VALUE: int = 200
+MIN_PLOT_VALUE: int = -2000
+MAX_PLOT_VALUE: int = 2000
 
 
 paramDatabase: databaseHandler = databaseHandler(path_to_serviceAccountKey, databaseURL, databaseReference)
@@ -287,7 +287,7 @@ main_layout.addLayout(row4Layout)
 QueensCanyon.saveParamsToJson()
 
 #set antialiasing for better looking plots
-pg.setConfigOptions(antialias=True)
+pg.setConfigOptions(antialias=False)
 pg.setConfigOptions(useOpenGL=True)
 
 freq = 0
@@ -303,32 +303,11 @@ def updateall():
     global freq
 
     try:
-        
-        # freq = freq%100000 + 1
 
         plot1.setThreshold(triggerSlider.getVal())
         plot1.setTriggerEdge(edgeSetting.getSelectedRadioButton())
-        print('getting data')
 
         data: dict[str, np.ndarray] = getPCIeStreamData(fd, SAMPLE_SIZE)
-        print('got data')
-
-        #i0 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 0, 'I')
-        #q0 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 0, 'Q')
-        #i1 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 1, 'I')
-        # q1 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 1, 'Q')
-        #i2 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 2, 'I')
-        # q2 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 2, 'Q')
-        #i3 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 3, 'I')
-        # q3 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 3, 'Q')
-        #i4 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 4, 'I')
-        # q4 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 4, 'Q')
-        #i5 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 5, 'I')
-        # q5 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 5, 'Q')
-        #i6 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 6, 'I')
-        # q6 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 6, 'Q')
-        #i7 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 7, 'I')
-        # q7 = getPCIeStreamData(PCIe_Device, SAMPLE_SIZE, 7, 'Q')
 
         plot1.update(data['I0'], plot1.curve0)
         plot1.update(data['I1'], plot1.curve1)
@@ -346,22 +325,6 @@ def updateall():
         plot2.update(data['I5'], plot2.curve5)
         plot2.update(data['I6'], plot2.curve6)
         plot2.update(data['I7'], plot2.curve7)
-        print('updated plot')
-        #plot1.update(i1, plot1.curve1)
-        #plot1.update(i2, plot1.curve2)
-        #plot1.update(i3, plot1.curve3)
-        #plot1.update(i4, plot1.curve4)
-        #plot1.update(i5, plot1.curve5)
-        #plot1.update(i6, plot1.curve6)
-        #plot1.update(i7, plot1.curve7)
-        #plot2.update(i0, plot2.curve0)
-        # plot2.update(i1, plot2.curve1)
-        # plot2.update(i2, plot2.curve2)
-        # plot2.update(i3, plot2.curve3)
-        # plot2.update(i4, plot2.curve4)
-        # plot2.update(i5, plot2.curve5)
-        # plot2.update(i6, plot2.curve6)
-        # plot2.update(i7, plot2.curve7)
 
         paramChanged: bool = False
 
@@ -369,10 +332,8 @@ def updateall():
         if QueensCanyon.saveParamsToJson() == True:
             paramDatabase.setData(QueensCanyon.getParams())
             paramChanged = True
-            print('save')
         
         if paramDatabase.databaseUpdatedFlag == True:
-            print('db2')
 
             #reset databaseUpdatedFlag
             paramDatabase.databaseUpdatedFlag = False
@@ -385,17 +346,14 @@ def updateall():
                 widget.update()
 
             paramChanged = True
-            print('db2')
 
         #if instance connected to hardware & dataChanged is True:
         if os.path.exists(PCIe_Device_command_stream) and paramChanged:
-            print('ex')
 
             #program QC hardware
             changedIndex: int = bramProgrammer.getChangedParamIndex()
             bramProgrammer.setParamsTable()
             print(bramProgrammer.updateBRAM(changedIndex))
-            print('ex2')
             
         
     except Exception as e:
