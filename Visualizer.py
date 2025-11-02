@@ -4,8 +4,6 @@ import mmap
 import numpy as np
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
-import time
-import struct
 
 #project specific include
 from Plot import Plot
@@ -15,9 +13,6 @@ from QtButtons import CheckBox
 from QtButtons import PushButton
 from QtFileSys import BrowserManager
 from ParamTools import ChannelControlWidget
-from ParamTools import LabelColumn
-from ParamTools import CheckBoxColumn
-from ParamTools import LineEditColumn
 
 #global parameter store & hardware controller
 from QC_Controller import QueensCanyon
@@ -97,6 +92,7 @@ def getPCIeData(numValues: int, offset: int) -> np.ndarray | None: #return array
 
     return None
 
+#opens card to host interface
 def openPCIeStream(stream: str) -> int:
     try:
 
@@ -109,6 +105,7 @@ def openPCIeStream(stream: str) -> int:
     finally:
         pass
 
+#closes card to host interface
 def closePCIeStream(fd: int) -> int:
     try:
 
@@ -120,13 +117,13 @@ def closePCIeStream(fd: int) -> int:
         pass
 
 
-componentMap: dict[str, int] = {
-    'I': 0,
-    'Q': 1
-}
-
 def getPCIeChannelData(fd: int, numValues: int, channel: int, component: str) -> np.ndarray:
     
+    componentMap: dict[str, int] = {
+        'I': 0,
+        'Q': 1
+    }
+
     try:
 
         offset: int = channel * 2 + componentMap[component]
@@ -280,22 +277,29 @@ stdinBrowser: BrowserManager = BrowserManager('Data Stream', row4Layout)
 
 stdoutBrowser: BrowserManager = BrowserManager('Command Stream', row4Layout)
 
-stdoutBrowser: BrowserManager = BrowserManager('Config File', row4Layout)
+configBrowser: BrowserManager = BrowserManager('Config File', row4Layout)
 
 main_layout.addLayout(row4Layout)
 
 QueensCanyon.saveParamsToJson()
 
-#set antialiasing for better looking plots
+#set antialiasing for better looking plots (may reduce performance)
 pg.setConfigOptions(antialias=False)
 pg.setConfigOptions(useOpenGL=True)
 
 freq = 0
 
-bramProgrammer.setParamsTable()
-print(bramProgrammer.setupBRAM())
 
-fd: int = openPCIeStream(PCIe_Device)
+#if instance connected to hardware, program hardware:
+if os.path.exists(PCIe_Device_command_stream):
+    bramProgrammer.setParamsTable()
+    print(bramProgrammer.setupBRAM())
+
+#if instance connected to hardware, open data stream:
+if os.path.exists(PCIe_Device):
+    fd: int = openPCIeStream(PCIe_Device)
+
+paramChanged: bool = False
 
 #update all plots
 def updateall():
@@ -307,32 +311,41 @@ def updateall():
         plot1.setThreshold(triggerSlider.getVal())
         plot1.setTriggerEdge(edgeSetting.getSelectedRadioButton())
 
-        data: dict[str, np.ndarray] = getPCIeStreamData(fd, SAMPLE_SIZE)
+        if os.path.exists(PCIe_Device):
+            data: dict[str, np.ndarray] = getPCIeStreamData(fd, SAMPLE_SIZE)
 
-        plot1.update(data['I0'], plot1.curve0)
-        plot1.update(data['I1'], plot1.curve1)
-        plot1.update(data['I2'], plot1.curve2)
-        plot1.update(data['I3'], plot1.curve3)
-        plot1.update(data['I4'], plot1.curve4)
-        plot1.update(data['I5'], plot1.curve5)
-        plot1.update(data['I6'], plot1.curve6)
-        plot1.update(data['I7'], plot1.curve7)
-        plot2.update(data['I0'], plot2.curve0)
-        plot2.update(data['I1'], plot2.curve1)
-        plot2.update(data['I2'], plot2.curve2)
-        plot2.update(data['I3'], plot2.curve3)
-        plot2.update(data['I4'], plot2.curve4)
-        plot2.update(data['I5'], plot2.curve5)
-        plot2.update(data['I6'], plot2.curve6)
-        plot2.update(data['I7'], plot2.curve7)
-
-        paramChanged: bool = False
+        #display curves based on user selection
+        if QueensCanyon.getParam("Channel 0-Enable") != 0:
+            plot1.update(data['I0'], plot1.curve0)
+            plot2.update(data['I0'], plot2.curve0)
+        if QueensCanyon.getParam("Channel 1-Enable") != 0:
+            plot1.update(data['I1'], plot1.curve1)
+            plot2.update(data['I1'], plot2.curve1)
+        if QueensCanyon.getParam("Channel 2-Enable") != 0:
+            plot1.update(data['I2'], plot1.curve2)
+            plot2.update(data['I2'], plot2.curve2)
+        if QueensCanyon.getParam("Channel 3-Enable") != 0:
+            plot1.update(data['I3'], plot1.curve3)
+            plot2.update(data['I3'], plot2.curve3)
+        if QueensCanyon.getParam("Channel 4-Enable") != 0:
+            plot1.update(data['I4'], plot1.curve4)
+            plot2.update(data['I4'], plot2.curve4)
+        if QueensCanyon.getParam("Channel 5-Enable") != 0:
+            plot1.update(data['I5'], plot1.curve5)
+            plot2.update(data['I5'], plot2.curve5)
+        if QueensCanyon.getParam("Channel 6-Enable") != 0:
+            plot1.update(data['I6'], plot1.curve6)
+            plot2.update(data['I6'], plot2.curve6)
+        if QueensCanyon.getParam("Channel 7-Enable") != 0:
+            plot1.update(data['I7'], plot1.curve7)
+            plot2.update(data['I7'], plot2.curve7)
 
         #if parameters were updated, update the database
         if QueensCanyon.saveParamsToJson() == True:
             paramDatabase.setData(QueensCanyon.getParams())
             paramChanged = True
         
+        #update app parameters if changes in database detected
         if paramDatabase.databaseUpdatedFlag == True:
 
             #reset databaseUpdatedFlag
@@ -347,18 +360,22 @@ def updateall():
 
             paramChanged = True
 
-        #if instance connected to hardware & dataChanged is True:
+        #if instance connected to hardware & paramChanged is True, program hardware:
         if os.path.exists(PCIe_Device_command_stream) and paramChanged:
 
             #program QC hardware
             changedIndex: int = bramProgrammer.getChangedParamIndex()
             bramProgrammer.setParamsTable()
             print(bramProgrammer.updateBRAM(changedIndex))
+
+            #reset paramChanged flag
+            paramChanged = False
             
         
     except Exception as e:
 
-        #close window in case of failure
+        #close stream and window in case of failure
+        closePCIeStream(fd)
         graph.close()
         print(f'Communication failure...{e}\n')
 

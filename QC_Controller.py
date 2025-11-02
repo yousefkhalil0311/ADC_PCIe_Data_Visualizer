@@ -1,7 +1,7 @@
-
 import json
 import os
 import struct
+from typing import Any
 
 class QC_Controller:
     def __init__(self, h2cStream: str, c2hStream: str):
@@ -59,12 +59,12 @@ class QC_Controller:
         self.configFile = fileName
         
     # Update a single parameter in the store
-    def setParam(self, key: str, value: any) -> None:
+    def setParam(self, key: str, value: Any) -> None:
         self.paramStore[key] = value
         self.storeMatchesJSON = False
 
     # Retrieve a single parameter from the store
-    def getParam(self, key: str) -> any:
+    def getParam(self, key: str) -> Any:
 
         if key in self.paramStore:
             return self.paramStore[key]
@@ -95,13 +95,5 @@ class QC_Controller:
     def loadParamsFromJson(self) -> None:
         with open(self.configFile, 'r') as configFile:
             self.paramStore = json.load(configFile)
-
-    # Placeholder: program a single parameter to the device
-    def programParam(self, key: str) -> None:
-        pass
-
-    # Placeholder: program all parameters to the device
-    def programAllParams(self) -> None:
-        pass
     
 QueensCanyon: QC_Controller = QC_Controller('', '')

@@ -50,9 +50,9 @@ class RadioButton:
 
         #react when a button is selected
         if checked:
-            QueensCanyon.setParam(f"{self.title}-{self.currentButton}", 0 if checked else 1)
+            QueensCanyon.setParam(f"{self.title}-{self.currentButton}", 0)
             self.currentButton = radioButton.text()
-            QueensCanyon.setParam(f"{self.title}-{self.currentButton}", 1 if checked else 0)
+            QueensCanyon.setParam(f"{self.title}-{self.currentButton}", 1)
 
     def getSelectedRadioButton(self) -> str:
         return self.currentButton
