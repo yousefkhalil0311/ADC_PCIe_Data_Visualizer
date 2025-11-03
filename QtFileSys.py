@@ -3,7 +3,7 @@ from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
 
 #Instantiates a widget to either enter a filename, or browse for a file in the sysyem
 class BrowserManager:
-    def __init__(self, title: str, layout: QtWidgets.QBoxLayout):
+    def __init__(self, title: str, defaultPath: str, layout: QtWidgets.QBoxLayout):
 
         self.title: str = title
 
@@ -12,6 +12,9 @@ class BrowserManager:
 
         #enter filename here in gui
         self.textBox = QtWidgets.QLineEdit()
+
+        #set default file
+        self.textBox.setText(defaultPath)
 
         #click this to open file manager
         self.browseButton = QtWidgets.QPushButton("Browse")
@@ -34,3 +37,9 @@ class BrowserManager:
         fileName, _ = QtWidgets.QFileDialog.getOpenFileName(self.browseButton, self.title)
         if(fileName):
             self.textBox.setText(fileName)
+
+    def getFilePath(self) -> str:
+        return self.textBox.text()
+    
+    def setFilePath(self, filePath: str) -> None:
+        self.textBox.setText(filePath)

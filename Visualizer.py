@@ -4,6 +4,8 @@ import mmap
 import numpy as np
 import pyqtgraph as pg
 from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
+from pathlib import Path
+from datetime import datetime
 
 #project specific include
 from Plot import Plot
@@ -31,6 +33,12 @@ PCIe_Device: str = '/dev/xdma0_c2h_0'
 
 #name of pcie device to connect to
 PCIe_Device_command_stream: str = '/dev/xdma0_user'
+
+#config file
+configFileName: str = 'config.json'
+
+#config file path
+configFilePath: str = f'{Path.cwd()}/{configFileName}'
 
 sharedmemFile: str = '/dev/shm/xdmaPythonStream'
 
@@ -60,7 +68,7 @@ paramDatabase.listen(onChange)
 
 
 #initialize object to handle writing params to hardware BRAM
-bramProgrammer: paramWriter = paramWriter(PCIe_Device_command_stream, 'config.json')
+bramProgrammer: paramWriter = paramWriter(PCIe_Device_command_stream, configFileName)
 
 #keep a reference of all widget instances
 widgetInstances: list = []
@@ -248,36 +256,69 @@ main_layout.addLayout(attSliderLayout)
 
 row3Layout = QtWidgets.QHBoxLayout()
 
-fileBrowser: BrowserManager = BrowserManager('Save File', row3Layout)
+#get current time for file name
+currentTimeStr: str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S-%f")
 
-numSamplesOrTime: RadioButton = RadioButton('Aquire by', row3Layout, 'num of Samples', 'time(ms)', default='num of Samples')
+#format save file for cwd/Captures/Capture_CurrentTime
+saveFilePath: str = f'{Path.cwd()}/Captures/Capture_{currentTimeStr}.bin'
 
-textBox: QtWidgets.QLineEdit = QtWidgets.QLineEdit()
+#file browser for save file
+fileBrowser: BrowserManager = BrowserManager('Save File', saveFilePath, row3Layout)
 
-textBox.setMaxLength(12)
-textBox.setFixedWidth(8 * 12)
+#choose whether to save data based on number of samples or aquisition length in ms
+numSamplesOrTime: RadioButton = RadioButton('Aquire by', row3Layout, 'num of Samples', 'time(us)', default='num of Samples')
 
+#TextBox for aquire value
+aquireValTextBox: QtWidgets.QLineEdit = QtWidgets.QLineEdit()
+aquireValTextBox.setMaxLength(12)
+aquireValTextBox.setFixedWidth(8 * 12)
+
+#callback for textbox
 def callback():
-    QueensCanyon.setParam("aquisitionTime(ms)", int(textBox.text()))
+    if QueensCanyon.getParam('Aquire by-time(us)') == 1:
+        QueensCanyon.setParam('aquisitionTime(ms)', int(aquireValTextBox.text()))
+    else:
+        QueensCanyon.setParam('num of Samples to get', int(aquireValTextBox.text()))
 
-textBox.editingFinished.connect(callback)
+#connect callback to aquisition size/length param
+aquireValTextBox.editingFinished.connect(callback)
 
 #add widgets to list
 widgetInstances += [numSamplesOrTime]
 
-row3Layout.addWidget(textBox)
+row3Layout.addWidget(aquireValTextBox)
 
-captureButton: PushButton = PushButton('Capture', row3Layout, lambda: print('Capturing!!!!'))
+#callback to get store a file of specified amount of samples when capture button is pressed.
+def capturButtonCallback() -> None:
+
+    global currentTimeStr, saveFilePath, fileBrowser
+
+    #update current time for save file
+    currentTimeStr = datetime.now().strftime("%Y-%m-%d_%H-%M-%S-%f")
+
+    #format save file for cwd/Captures/Capture_CurrentTime
+    saveFilePath = f'{Path.cwd()}/Captures/Capture_{currentTimeStr}.bin'
+
+    #set fileBrowser Text
+    fileBrowser.setFilePath(saveFilePath)
+
+    print(f'Capturing {QueensCanyon.getParam('num of Samples to get')} bytes')
+
+#save a data capture to specified file
+captureButton: PushButton = PushButton('Capture', row3Layout, capturButtonCallback)
+
 
 main_layout.addLayout(row3Layout)
 
 row4Layout = QtWidgets.QHBoxLayout()
 
-stdinBrowser: BrowserManager = BrowserManager('Data Stream', row4Layout)
+#ADC sample data card to host stream
+stdinBrowser: BrowserManager = BrowserManager('Data Stream', PCIe_Device, row4Layout)
 
-stdoutBrowser: BrowserManager = BrowserManager('Command Stream', row4Layout)
+#data stream to send parameters to hardware
+stdoutBrowser: BrowserManager = BrowserManager('Command Stream', PCIe_Device_command_stream, row4Layout)
 
-configBrowser: BrowserManager = BrowserManager('Config File', row4Layout)
+configBrowser: BrowserManager = BrowserManager('Config File', configFilePath, row4Layout)
 
 main_layout.addLayout(row4Layout)
 
@@ -291,28 +332,63 @@ freq = 0
 
 
 #if instance connected to hardware, program hardware:
-if os.path.exists(PCIe_Device_command_stream):
+instanceCmdStream: str = stdoutBrowser.getFilePath()
+if os.path.exists(instanceCmdStream):
     bramProgrammer.setParamsTable()
     print(bramProgrammer.setupBRAM())
 
 #if instance connected to hardware, open data stream:
-if os.path.exists(PCIe_Device):
-    fd: int = openPCIeStream(PCIe_Device)
+instanceDataStream: str = stdinBrowser.getFilePath()
+if os.path.exists(instanceDataStream):
+    fd: int = openPCIeStream(instanceDataStream)
 
 paramChanged: bool = False
 
 #update all plots
 def updateall():
 
-    global freq
+    global freq, instanceCmdStream, instanceDataStream, configFileName, configFilePath
 
     try:
 
         plot1.setThreshold(triggerSlider.getVal())
         plot1.setTriggerEdge(edgeSetting.getSelectedRadioButton())
 
-        if os.path.exists(PCIe_Device):
+        #if the target data input stream changed, close old file and open new file
+        if instanceDataStream != stdinBrowser.getFilePath():
+
+            #close old stream
+            closePCIeStream(fd)
+
+            #update stream name
+            instanceDataStream = stdinBrowser.getFilePath()
+
+            #open new stream
+            fd = openPCIeStream(instanceDataStream)
+
+        #if the target command stream changed, reprogram new device
+        if instanceCmdStream != stdoutBrowser.getFilePath():
+
+            instanceCmdStream = stdoutBrowser.getFilePath()
+
+            bramProgrammer.setCommandStream(instanceCmdStream)
+
+            print(bramProgrammer.setupBRAM())
+
+        #if the config.json file changed, update config file references throughout application
+        if configFilePath != configBrowser.getFilePath():
+
+            configFilePath = configBrowser.getFilePath()
+
+            configFileName = Path(configFilePath).name
+
+            bramProgrammer.setConfigFile(configFileName)
+
+            QueensCanyon.setConfigFile(configFileName)
+
+        if os.path.exists(instanceDataStream):
             data: dict[str, np.ndarray] = getPCIeStreamData(fd, SAMPLE_SIZE)
+
 
         #display curves based on user selection
         if QueensCanyon.getParam("Channel 0-Enable") != 0:
