@@ -31,6 +31,12 @@ databaseReference: str = "QC_paramStore"
 #name of pcie device to connect to
 PCIe_Device: str = '/dev/xdma0_c2h_0'
 
+#global file descriptor for data stream. Use for async captures
+fd: int = -1
+
+#global buffer to hold sample data
+sampleDataBuffer: dict[str, np.ndarray] = {}
+
 #name of pcie device to connect to
 PCIe_Device_command_stream: str = '/dev/xdma0_user'
 
@@ -43,13 +49,13 @@ configFilePath: str = f'{Path.cwd()}/{configFileName}'
 sharedmemFile: str = '/dev/shm/xdmaPythonStream'
 
 #Sample Depth
-SAMPLE_SIZE: int = 32
+SAMPLE_SIZE: int = QueensCanyon.getParam('num of Samples to get')
 BUFFER_SIZE: int = SAMPLE_SIZE*16
 
 #Graph Parameters
-PLOT_UNITS: str = 'mV'
-MIN_PLOT_VALUE: int = -2000
-MAX_PLOT_VALUE: int = 2000
+PLOT_UNITS: str = 'bin'
+MIN_PLOT_VALUE: int = -2048
+MAX_PLOT_VALUE: int = 2047
 
 
 paramDatabase: databaseHandler = databaseHandler(path_to_serviceAccountKey, databaseURL, databaseReference)
@@ -263,7 +269,7 @@ currentTimeStr: str = datetime.now().strftime("%Y-%m-%d_%H-%M-%S-%f")
 saveFilePath: str = f'{Path.cwd()}/Captures/Capture_{currentTimeStr}.bin'
 
 #file browser for save file
-fileBrowser: BrowserManager = BrowserManager('Save File', saveFilePath, row3Layout)
+saveFileBrowser: BrowserManager = BrowserManager('Save File', saveFilePath, row3Layout)
 
 #choose whether to save data based on number of samples or aquisition length in ms
 numSamplesOrTime: RadioButton = RadioButton('Aquire by', row3Layout, 'num of Samples', 'time(us)', default='num of Samples')
@@ -272,6 +278,9 @@ numSamplesOrTime: RadioButton = RadioButton('Aquire by', row3Layout, 'num of Sam
 aquireValTextBox: QtWidgets.QLineEdit = QtWidgets.QLineEdit()
 aquireValTextBox.setMaxLength(12)
 aquireValTextBox.setFixedWidth(8 * 12)
+
+#get default value from config file
+aquireValTextBox.setText(str(QueensCanyon.getParam('num of Samples to get')))
 
 #callback for textbox
 def callback():
@@ -289,9 +298,13 @@ widgetInstances += [numSamplesOrTime]
 row3Layout.addWidget(aquireValTextBox)
 
 #callback to get store a file of specified amount of samples when capture button is pressed.
-def capturButtonCallback() -> None:
+def captureButtonCallback() -> None:
 
-    global currentTimeStr, saveFilePath, fileBrowser
+    global currentTimeStr, saveFilePath, saveFileBrowser, fd, sampleDataBuffer
+
+    if fd < 0:
+        print(f'Invalid file descriptor: {fd}')
+        return None
 
     #update current time for save file
     currentTimeStr = datetime.now().strftime("%Y-%m-%d_%H-%M-%S-%f")
@@ -299,13 +312,22 @@ def capturButtonCallback() -> None:
     #format save file for cwd/Captures/Capture_CurrentTime
     saveFilePath = f'{Path.cwd()}/Captures/Capture_{currentTimeStr}.bin'
 
-    #set fileBrowser Text
-    fileBrowser.setFilePath(saveFilePath)
+    #set saveFileBrowser Text
+    saveFileBrowser.setFilePath(saveFilePath)
 
-    print(f'Capturing {QueensCanyon.getParam('num of Samples to get')} bytes')
+    numSamplesPerChannel: int = QueensCanyon.getParam('num of Samples to get')
+
+    print(f'Capturing {numSamplesPerChannel} samples from fd = {fd}')
+
+    plot1.setWidth(numSamplesPerChannel)
+    plot2.setWidth(numSamplesPerChannel)
+    
+    sampleDataBuffer = getPCIeStreamData(fd, numSamplesPerChannel)
+
+
 
 #save a data capture to specified file
-captureButton: PushButton = PushButton('Capture', row3Layout, capturButtonCallback)
+captureButton: PushButton = PushButton('Capture', row3Layout, callback=captureButtonCallback)
 
 
 main_layout.addLayout(row3Layout)
@@ -313,11 +335,15 @@ main_layout.addLayout(row3Layout)
 row4Layout = QtWidgets.QHBoxLayout()
 
 #ADC sample data card to host stream
+global stdinBrowser
 stdinBrowser: BrowserManager = BrowserManager('Data Stream', PCIe_Device, row4Layout)
 
 #data stream to send parameters to hardware
+global stdoutBrowser
 stdoutBrowser: BrowserManager = BrowserManager('Command Stream', PCIe_Device_command_stream, row4Layout)
 
+#browser to select config file
+global configBrowser
 configBrowser: BrowserManager = BrowserManager('Config File', configFilePath, row4Layout)
 
 main_layout.addLayout(row4Layout)
@@ -340,14 +366,15 @@ if os.path.exists(instanceCmdStream):
 #if instance connected to hardware, open data stream:
 instanceDataStream: str = stdinBrowser.getFilePath()
 if os.path.exists(instanceDataStream):
-    fd: int = openPCIeStream(instanceDataStream)
+
+    fd = openPCIeStream(instanceDataStream)
 
 paramChanged: bool = False
 
 #update all plots
 def updateall():
 
-    global freq, instanceCmdStream, instanceDataStream, configFileName, configFilePath
+    global freq, instanceCmdStream, instanceDataStream, configFileName, configFilePath, fd, sampleDataBuffer, stdinBrowser, stdoutBrowser, configBrowser
 
     try:
 
@@ -357,14 +384,19 @@ def updateall():
         #if the target data input stream changed, close old file and open new file
         if instanceDataStream != stdinBrowser.getFilePath():
 
-            #close old stream
-            closePCIeStream(fd)
+            #close old stream if it exists
+            if fd > -1:
+                closePCIeStream(fd)
 
             #update stream name
             instanceDataStream = stdinBrowser.getFilePath()
 
+            print(f'in stream now {instanceDataStream}')
+
             #open new stream
             fd = openPCIeStream(instanceDataStream)
+
+            print(f'current fd: {fd}')
 
         #if the target command stream changed, reprogram new device
         if instanceCmdStream != stdoutBrowser.getFilePath():
@@ -387,34 +419,67 @@ def updateall():
             QueensCanyon.setConfigFile(configFileName)
 
         if os.path.exists(instanceDataStream):
-            data: dict[str, np.ndarray] = getPCIeStreamData(fd, SAMPLE_SIZE)
 
+            if sampleDataBuffer == {}:
+                sampleDataBuffer = getPCIeStreamData(fd, plot1.getWidth())
 
-        #display curves based on user selection
-        if QueensCanyon.getParam("Channel 0-Enable") != 0:
-            plot1.update(data['I0'], plot1.curve0)
-            plot2.update(data['I0'], plot2.curve0)
-        if QueensCanyon.getParam("Channel 1-Enable") != 0:
-            plot1.update(data['I1'], plot1.curve1)
-            plot2.update(data['I1'], plot2.curve1)
-        if QueensCanyon.getParam("Channel 2-Enable") != 0:
-            plot1.update(data['I2'], plot1.curve2)
-            plot2.update(data['I2'], plot2.curve2)
-        if QueensCanyon.getParam("Channel 3-Enable") != 0:
-            plot1.update(data['I3'], plot1.curve3)
-            plot2.update(data['I3'], plot2.curve3)
-        if QueensCanyon.getParam("Channel 4-Enable") != 0:
-            plot1.update(data['I4'], plot1.curve4)
-            plot2.update(data['I4'], plot2.curve4)
-        if QueensCanyon.getParam("Channel 5-Enable") != 0:
-            plot1.update(data['I5'], plot1.curve5)
-            plot2.update(data['I5'], plot2.curve5)
-        if QueensCanyon.getParam("Channel 6-Enable") != 0:
-            plot1.update(data['I6'], plot1.curve6)
-            plot2.update(data['I6'], plot2.curve6)
-        if QueensCanyon.getParam("Channel 7-Enable") != 0:
-            plot1.update(data['I7'], plot1.curve7)
-            plot2.update(data['I7'], plot2.curve7)
+            #display curves based on user selection
+            if QueensCanyon.getParam("Channel 0-Enable") != 0:
+                plot1.update(sampleDataBuffer['I0'], plot1.curve0)
+                plot2.update(sampleDataBuffer['I0'], plot2.curve0)
+            else:
+                plot1.hideCurve(plot1.curve0)
+                plot2.hideCurve(plot2.curve0)
+
+            if QueensCanyon.getParam("Channel 1-Enable") != 0:
+                plot1.update(sampleDataBuffer['I1'], plot1.curve1)
+                plot2.update(sampleDataBuffer['I1'], plot2.curve1)
+            else:
+                plot1.hideCurve(plot1.curve1)
+                plot2.hideCurve(plot2.curve1)
+
+            if QueensCanyon.getParam("Channel 2-Enable") != 0:
+                plot1.update(sampleDataBuffer['I2'], plot1.curve2)
+                plot2.update(sampleDataBuffer['I2'], plot2.curve2)
+            else:
+                plot1.hideCurve(plot1.curve2)
+                plot2.hideCurve(plot2.curve2)
+                
+            if QueensCanyon.getParam("Channel 3-Enable") != 0:
+                plot1.update(sampleDataBuffer['I3'], plot1.curve3)
+                plot2.update(sampleDataBuffer['I3'], plot2.curve3)
+            else:
+                plot1.hideCurve(plot1.curve3)
+                plot2.hideCurve(plot2.curve3)
+                
+            if QueensCanyon.getParam("Channel 4-Enable") != 0:
+                plot1.update(sampleDataBuffer['I4'], plot1.curve4)
+                plot2.update(sampleDataBuffer['I4'], plot2.curve4)
+            else:
+                plot1.hideCurve(plot1.curve4)
+                plot2.hideCurve(plot2.curve4)
+                
+            if QueensCanyon.getParam("Channel 5-Enable") != 0:
+                plot1.update(sampleDataBuffer['I5'], plot1.curve5)
+                plot2.update(sampleDataBuffer['I5'], plot2.curve5)
+            else:
+                plot1.hideCurve(plot1.curve5)
+                plot2.hideCurve(plot2.curve5)
+                
+            if QueensCanyon.getParam("Channel 6-Enable") != 0:
+                plot1.update(sampleDataBuffer['I6'], plot1.curve6)
+                plot2.update(sampleDataBuffer['I6'], plot2.curve6)
+            else:
+                plot1.hideCurve(plot1.curve6)
+                plot2.hideCurve(plot2.curve6)
+                
+            if QueensCanyon.getParam("Channel 7-Enable") != 0:
+                plot1.update(sampleDataBuffer['I7'], plot1.curve7)
+                plot2.update(sampleDataBuffer['I7'], plot2.curve7)
+            else:
+                plot1.hideCurve(plot1.curve7)
+                plot2.hideCurve(plot2.curve7)
+                
 
         #if parameters were updated, update the database
         if QueensCanyon.saveParamsToJson() == True:
@@ -451,7 +516,10 @@ def updateall():
     except Exception as e:
 
         #close stream and window in case of failure
-        closePCIeStream(fd)
+        if fd > -1:
+            closePCIeStream(fd)
+            fd = -1
+            
         graph.close()
         print(f'Communication failure...{e}\n')
 

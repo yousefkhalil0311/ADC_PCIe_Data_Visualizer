@@ -17,6 +17,8 @@ class Plot:
         self.plot.setLabel('bottom', 'Sample', units='')
         self.plot.setLabel('left', 'Amplitude', units=unit)
         self.plot.enableAutoRange(axis='y', enable=False)
+        self.plot.enableAutoRange(axis='x', enable=True)
+        self.plot.setXRange(0, x_width)
         self.plot.setYRange(y_min, y_max)
 
         self.curve0 = self.plot.plot(self.x, self.y, pen='y')
@@ -29,6 +31,8 @@ class Plot:
         self.curve6 = self.plot.plot(self.x, self.y, pen='y')
         self.curve7 = self.plot.plot(self.x, self.y, pen='w')
 
+        self.fftActive: bool = fftActive
+
         self.plot.ctrl.fftCheck.setChecked(fftActive)
 
 
@@ -36,8 +40,6 @@ class Plot:
         
         if newPlotData is None:
             return
-        
-        SAMPLE_SIZE : int = self.SAMPLE_SIZE
 
         thresholdIndex: int = 0
 
@@ -45,7 +47,7 @@ class Plot:
         for index, sampleVal in enumerate(newPlotData):
 
             #align signal based on the type of edge detection
-            if abs(sampleVal - self.threshold) < 1:
+            if abs(np.int32(sampleVal) - np.int32(self.threshold)) < 1:
 
                 #check if element is last element
                 if index != (len(newPlotData) - 1):
@@ -60,28 +62,53 @@ class Plot:
                     elif self.triggerEdge == 'Any':
                         thresholdIndex = index
                         break
-                    
- 
 
         view: np.ndarray = newPlotData[thresholdIndex : len(newPlotData)]
 
         self.y = view.copy()
 
-        if len(self.y) > SAMPLE_SIZE :
-            self.y = self.y[0 : SAMPLE_SIZE]
+        if len(self.y) > self.SAMPLE_SIZE :
+            self.y = self.y[0 : self.SAMPLE_SIZE]
         else:
-            self.y = np.pad(self.y, (0, SAMPLE_SIZE - len(self.y)), constant_values=0)
+            self.y = np.pad(self.y, (0, self.SAMPLE_SIZE - len(self.y)), constant_values=0)
 
-        if(self.y.size % SAMPLE_SIZE == 0):
+        if(self.y.size % self.SAMPLE_SIZE == 0):
             curve.setData(self.x, self.y)
-        
 
+        curve.setVisible(True)
+
+        
+    #sets the trigger level
     def setThreshold(self, threshold: int) -> None:
         self.threshold = threshold
 
+    #sets the edge to trigger on
     def setTriggerEdge(self, edge: str) -> None:
         self.triggerEdge: str = edge
         
+    #sets the width of the graph, in samples
+    def setWidth(self, x_width: int) -> None:
 
+        self.SAMPLE_SIZE = x_width
+
+        if self.fftActive:
+            self.plot.setXRange(0, 0.5)
+        else:
+            self.plot.setXRange(0, x_width)
+
+        self.x : np.ndarray = np.arange(0, x_width, 1)
+
+        self.y = np.zeros(x_width, self.y.dtype)
+
+    #gets width of graph
+    def getWidth(self) -> int:
+
+        return self.SAMPLE_SIZE
+        
+    #sets range of graph, in bin value
     def setRange(self, y_min: int, y_max: int) -> None:
         self.plot.setYRange(y_min, y_max)
+
+    #make curve disappear when deselected
+    def hideCurve(self, curve) -> None:
+        curve.setVisible(False)
