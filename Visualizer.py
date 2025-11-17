@@ -23,6 +23,8 @@ from QC_Controller import QueensCanyon
 from paramWriter import databaseHandler
 from paramWriter import paramWriter
 
+DATABASE_CONNECTION_ENABLE: bool = False
+
 #params needed to connect to database
 path_to_serviceAccountKey: str = "secrets/db_accountkey.json"
 databaseURL: str = "https://yksdb001-default-rtdb.firebaseio.com"
@@ -57,20 +59,25 @@ PLOT_UNITS: str = 'bin'
 MIN_PLOT_VALUE: int = -2048
 MAX_PLOT_VALUE: int = 2047
 
+global paramDatabase
 
-paramDatabase: databaseHandler = databaseHandler(path_to_serviceAccountKey, databaseURL, databaseReference)
+if DATABASE_CONNECTION_ENABLE:
 
-def onChange(event, data):
+    paramDatabase: databaseHandler = databaseHandler(path_to_serviceAccountKey, databaseURL, databaseReference)
 
-    if isinstance(data, dict):
-        if data['data'] and isinstance(data['data'], dict):
-            for key, value in data['data'].items():
-                QueensCanyon.setParam(key, value)
-            
-            paramDatabase.databaseUpdatedFlag = True
+    def onChange(event, data):
+
+        global QueensCanyon
+
+        if isinstance(data, dict):
+            if data['data'] and isinstance(data['data'], dict):
+                for key, value in data['data'].items():
+                    QueensCanyon.setParam(key, value)
+                
+                paramDatabase.databaseUpdatedFlag = True
 
 
-paramDatabase.listen(onChange)
+    paramDatabase.listen(onChange)
 
 
 #initialize object to handle writing params to hardware BRAM
@@ -483,23 +490,26 @@ def updateall():
 
         #if parameters were updated, update the database
         if QueensCanyon.saveParamsToJson() == True:
-            paramDatabase.setData(QueensCanyon.getParams())
+            if DATABASE_CONNECTION_ENABLE:
+                paramDatabase.setData(QueensCanyon.getParams())
             paramChanged = True
         
         #update app parameters if changes in database detected
-        if paramDatabase.databaseUpdatedFlag == True:
+        if DATABASE_CONNECTION_ENABLE:
+            
+            if paramDatabase.databaseUpdatedFlag == True:
 
-            #reset databaseUpdatedFlag
-            paramDatabase.databaseUpdatedFlag = False
+                #reset databaseUpdatedFlag
+                paramDatabase.databaseUpdatedFlag = False
 
-            #update JSON with latest params
-            QueensCanyon.saveParamsToJson()
+                #update JSON with latest params
+                QueensCanyon.saveParamsToJson()
 
-            #update gui from paramStore
-            for widget in widgetInstances:
-                widget.update()
+                #update gui from paramStore
+                for widget in widgetInstances:
+                    widget.update()
 
-            paramChanged = True
+                paramChanged = True
 
         #if instance connected to hardware & paramChanged is True, program hardware:
         if os.path.exists(PCIe_Device_command_stream) and paramChanged:
