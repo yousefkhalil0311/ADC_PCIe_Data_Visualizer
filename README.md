@@ -13,26 +13,34 @@ Instructions to get started:
     sudo apt update;
     sudo apt install python3.12 python3.12-venv python3.12-dev;
 
-2) After cloning the repository, navigate to the folder and create a virtual environment
+2) Navigate to the folder in which you would like to clone the repository and clone the repository
+
+    git clone https://github.com/yousefkhalil0311/ADC_PCIe_Data_Visualizer.git
+
+3) Navigate to the ADC_PCIe_Data_Visualizer folder
+
+    cd ADC_PCIe_Data_Visualizer
+
+3) Create a virtual environment
 
     python3.12 -m venv venv
 
-3) Activate the virtual environment
+4) Activate the virtual environment
 
     source venv/bin/activate
 
-4) Verify python version is 3.12
+5) Verify python version is 3.12
 
     python --version
 
-5) upgrade pip
+6) upgrade pip
 
     pip install --upgrade pip
 
-6) Install all python dependencies (in requirements.txt within the repo)
+7) Install all python dependencies (in requirements.txt within the repo)
 
     pip install -r requirements.txt
 
-7) run the code
+8) run the code
 
     python Visualizer.py
