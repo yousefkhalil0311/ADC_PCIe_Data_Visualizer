@@ -37,9 +37,25 @@ Instructions to get started:
 
     pip install --upgrade pip
 
-7) Install all python dependencies (in requirements.txt within the repo)
+7) Install all python dependencies (in requirements.txt within the repo). Check NOTE in case of error
 
     pip install -r requirements.txt
+
+    NOTE: If you get an error, change the following lines in requirements.txt and rerun the command:
+
+    Change
+
+        shiboken6==6.9.0
+        PySide6==6.9.0
+        PySide6_Addons==6.9.0
+        PySide6_Essentials==6.9.0
+
+    To
+
+        shiboken6==6.8.0.2
+        PySide6==6.8.0.2
+        PySide6_Addons==6.8.0.2
+        PySide6_Essentials==6.8.0.2
 
 8) run the code
 
