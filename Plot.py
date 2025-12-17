@@ -94,9 +94,9 @@ class Plot:
         if self.fftActive:
             self.plot.setXRange(0, 0.5)
         else:
-            self.plot.setXRange(0, x_width)
+            self.plot.setXRange(0, x_width - 1)
 
-        self.x : np.ndarray = np.arange(0, x_width, 1)
+        self.x : np.ndarray = np.arange(0, x_width - 1, 1)
 
         self.y = np.zeros(x_width, self.y.dtype)
 

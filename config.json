@@ -1,7 +1,7 @@
 {
     "Channel 0-Enable": 0,
     "Channel 1-Enable": 0,
-    "Channel 2-Enable": 0,
+    "Channel 2-Enable": 1,
     "Channel 3-Enable": 0,
     "Channel 4-Enable": 0,
     "Channel 5-Enable": 0,
@@ -26,7 +26,7 @@
     "attenuation_binVal": 63,
     "num of Samples to get": 16,
     "Aquire by-time(us)": 0,
-    "aquisitionTime(ms)": 10,
+    "aquisitionTime(ms)": 256,
     "Calibration Mode": 0,
     "Edge-Rising": 1,
     "Edge-Falling": 0,
@@ -37,8 +37,8 @@
     "DDC 2-2": 0,
     "DDC 2-1": 0,
     "DDC 3-1": 0,
-    "Trigger": 440,
-    "Attenuation": 24,
+    "Trigger": 100,
+    "Attenuation": 31,
     "DDC 4-1": 0,
     "Aquire by-number of Samples": 0,
     "Aquire by-time(ms)": 0
