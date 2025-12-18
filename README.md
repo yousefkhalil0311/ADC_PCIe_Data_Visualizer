@@ -3,7 +3,7 @@ Nvidia Orin GPU running Ubuntu 22.04
 iWave G35M XCZU19EG SOM
 Custom carrier board & system (undisclosed).
 
-Instructions to get started:
+Instructions to get started: Tested on Ubuntu 24.04.1 LTS
 
 1) Use the following linux commands to install python 3.12:
 
@@ -33,7 +33,12 @@ Instructions to get started:
 
         python --version
 
-6) upgrade pip
+6) Install pip
+
+        sudo apt install python3-pip
+        python -m pip install --upgrade pip
+
+7) upgrade pip
 
         pip install --upgrade pip
 
