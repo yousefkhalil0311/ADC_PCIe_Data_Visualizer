@@ -42,7 +42,7 @@ Instructions to get started: Tested on Ubuntu 24.04.1 LTS
 
         pip install --upgrade pip
 
-7) Install all python dependencies (in requirements.txt within the repo). Check NOTE in case of error
+8) Install all python dependencies (in requirements.txt within the repo). Check NOTE in case of error
 
         pip install -r requirements.txt
 
@@ -62,6 +62,6 @@ Instructions to get started: Tested on Ubuntu 24.04.1 LTS
         PySide6_Addons==6.8.0.2
         PySide6_Essentials==6.8.0.2
 
-8) run the code
+9) run the code
 
         python Visualizer.py
