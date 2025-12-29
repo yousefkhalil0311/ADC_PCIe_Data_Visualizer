@@ -72,7 +72,9 @@ class RadioButton:
             radioButton.setChecked(bool(updatedState))
             radioButton.blockSignals(False)
 
-            self.currentButton = radioButton.text()
+            # Only update the cached current button when this radio is actually selected
+            if bool(updatedState):
+                self.currentButton = radioButton.text()
 
 #Class to instantiate checkbox widgets in the parent layout
 class CheckBox:

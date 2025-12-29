@@ -21,15 +21,17 @@ class Plot:
         self.plot.setXRange(0, x_width)
         self.plot.setYRange(y_min, y_max)
 
-        self.curve0 = self.plot.plot(self.x, self.y, pen='y')
-        self.curve1 = self.plot.plot(self.x, self.y, pen='r')
-        self.curve2 = self.plot.plot(self.x, self.y, pen='g')
-        self.curve3 = self.plot.plot(self.x, self.y, pen='b')
+        # Assign a unique name and color to each curve when plotting
+        # Color Map: r, g, b, c, m, y, w, k (red, green, blue, cyan, magenta, yellow, white, black)
+        self.curve3 = self.plot.plot(self.x, self.y, pen='c', name='CH1') # Channel 1: Cyan
+        self.curve1 = self.plot.plot(self.x, self.y, pen='g', name='CH2') # Channel 2: Green
+        self.curve2 = self.plot.plot(self.x, self.y, pen='b', name='CH3') # Channel 3: Blue
+        self.curve0 = self.plot.plot(self.x, self.y, pen='r', name='CH4') # Channel 4: Red
 
-        self.curve4 = self.plot.plot(self.x, self.y, pen='c')
-        self.curve5 = self.plot.plot(self.x, self.y, pen='m')
-        self.curve6 = self.plot.plot(self.x, self.y, pen='y')
-        self.curve7 = self.plot.plot(self.x, self.y, pen='w')
+        self.curve7 = self.plot.plot(self.x, self.y, pen="#FFA600", name='CH5')   # Channel 5: Orange
+        self.curve5 = self.plot.plot(self.x, self.y, pen='y', name='CH6')           # Channel 6: Yellow
+        self.curve6 = self.plot.plot(self.x, self.y, pen='w', name='CH7')           # Channel 7: White
+        self.curve4 = self.plot.plot(self.x, self.y, pen='m', name='CH8')           # Channel 8: Magenta
 
         self.fftActive: bool = fftActive
 
