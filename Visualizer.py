@@ -381,7 +381,7 @@ paramChanged: bool = False
 #update all plots
 def updateall():
 
-    global freq, instanceCmdStream, instanceDataStream, configFileName, configFilePath, fd, sampleDataBuffer, stdinBrowser, stdoutBrowser, configBrowser
+    global freq, instanceCmdStream, instanceDataStream, configFileName, configFilePath, fd, sampleDataBuffer, stdinBrowser, stdoutBrowser, configBrowser, paramChanged
 
     try:
 
